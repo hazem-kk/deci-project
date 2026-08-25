@@ -1,0 +1,2081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080b14">
+<title>BusBuddy — Your bus. Your stop. Your time.</title>
+<meta name="description" content="BusBuddy is a smart bus-stop assistant prototype: find your nearest stop, plan a journey, see live-style arrivals, and ask Buddy for help.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ============================= DESIGN TOKENS ============================= */
+:root{
+  --bg:#080a13;
+  --bg-1:#0b0f1c;
+  --bg-2:#0e1424;
+  --surface:rgba(255,255,255,.045);
+  --surface-2:rgba(255,255,255,.075);
+  --surface-hi:rgba(255,255,255,.12);
+  --border:rgba(255,255,255,.09);
+  --border-hi:rgba(255,255,255,.18);
+
+  --blue:#3d7fff;
+  --blue-soft:#7fa8ff;
+  --cyan:#22d3ee;
+  --purple:#a855f7;
+  --pink:#ec4899;
+  --mint:#34d399;
+  --amber:#fbbf24;
+  --red:#fb7185;
+
+  --grad-primary:linear-gradient(135deg,#3d7fff 0%,#22d3ee 100%);
+  --grad-accent:linear-gradient(135deg,#a855f7 0%,#3d7fff 60%,#22d3ee 100%);
+  --grad-ghost:linear-gradient(180deg,rgba(61,127,255,.16),rgba(168,85,247,.05));
+
+  --text:#f3f5fb;
+  --text-dim:#a3acc7;
+  --text-faint:#666f8d;
+
+  --font-display:'Space Grotesk',ui-sans-serif,sans-serif;
+  --font-body:'Inter',ui-sans-serif,sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,monospace;
+
+  --radius-xl:28px;
+  --radius-lg:20px;
+  --radius-md:14px;
+  --radius-sm:10px;
+
+  --shadow-glow:0 0 0 1px rgba(255,255,255,.06), 0 20px 60px -20px rgba(61,127,255,.35);
+  --ease:cubic-bezier(.19,1,.22,1);
+  --nav-h:76px;
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;transition-duration:.001ms !important;scroll-behavior:auto !important;}
+}
+body{
+  margin:0;
+  background:
+    radial-gradient(1100px 620px at 82% -8%, rgba(61,127,255,.22), transparent 60%),
+    radial-gradient(900px 560px at -10% 18%, rgba(168,85,247,.16), transparent 60%),
+    radial-gradient(800px 500px at 50% 100%, rgba(34,211,238,.10), transparent 60%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+h1,h2,h3,h4{font-family:var(--font-display);letter-spacing:-.02em;margin:0;font-weight:600;}
+p{margin:0;color:var(--text-dim);line-height:1.6;}
+a{color:inherit;}
+button{font-family:inherit;}
+img,svg{display:block;max-width:100%;}
+ul{margin:0;padding:0;list-style:none;}
+input,textarea{font-family:inherit;}
+
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px;}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:var(--font-mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--cyan);background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);
+  padding:7px 14px;border-radius:999px;
+}
+.eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);}
+.section{padding:120px 0;position:relative;scroll-margin-top:calc(var(--nav-h) + 18px);}
+.section-head{max-width:640px;margin-bottom:56px;}
+.section-head h2{font-size:clamp(28px,4vw,42px);line-height:1.12;margin-top:16px;}
+.section-head p{font-size:17px;margin-top:14px;}
+.grad-text{background:var(--grad-primary);-webkit-background-clip:text;background-clip:text;color:transparent;}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  font-family:var(--font-body);font-weight:700;font-size:15px;
+  padding:15px 26px;border-radius:999px;border:1px solid transparent;cursor:pointer;
+  transition:transform .25s var(--ease),box-shadow .25s var(--ease),background .25s var(--ease),border-color .25s var(--ease);
+  white-space:nowrap;
+}
+.btn:active{transform:scale(.97);}
+.btn--primary{background:var(--grad-primary);color:#04101f;box-shadow:0 10px 30px -8px rgba(61,127,255,.55);}
+.btn--primary:hover{box-shadow:0 14px 38px -6px rgba(61,127,255,.75);transform:translateY(-2px);}
+.btn--secondary{background:var(--surface-2);color:var(--text);border-color:var(--border-hi);backdrop-filter:blur(8px);}
+.btn--secondary:hover{background:var(--surface-hi);border-color:rgba(255,255,255,.3);transform:translateY(-2px);}
+.btn--ghost{background:transparent;color:var(--text-dim);border-color:var(--border);}
+.btn--ghost:hover{color:var(--text);border-color:var(--border-hi);}
+.btn--sm{padding:10px 18px;font-size:13.5px;}
+.btn--block{width:100%;}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none !important;}
+.icon-btn{
+  width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  background:var(--surface-2);border:1px solid var(--border);color:var(--text);cursor:pointer;transition:all .2s var(--ease);
+}
+.icon-btn:hover{background:var(--surface-hi);transform:translateY(-1px);}
+
+:focus-visible{outline:2.5px solid var(--cyan);outline-offset:3px;border-radius:6px;}
+.skip-link{
+  position:absolute;top:-60px;left:16px;background:var(--cyan);color:#04101f;font-weight:700;
+  padding:12px 18px;border-radius:10px;z-index:1000;transition:top .2s;
+}
+.skip-link:focus{top:16px;}
+
+/* Route rail (signature element) */
+.route-rail{
+  position:fixed;left:26px;top:0;height:100vh;width:34px;z-index:40;
+  display:none;align-items:center;pointer-events:none;
+}
+@media(min-width:1180px){.route-rail{display:flex;}}
+.route-rail svg{overflow:visible;}
+.route-rail .rail-track{stroke:rgba(255,255,255,.08);stroke-width:2;fill:none;}
+.route-rail .rail-fill{stroke:url(#railGrad);stroke-width:2;fill:none;stroke-linecap:round;transition:stroke-dashoffset .12s linear;}
+.route-rail .rail-bus{transition:offset-distance .12s linear;filter:drop-shadow(0 0 8px rgba(34,211,238,.8));}
+
+/* Nav */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:200;height:var(--nav-h);
+  display:flex;align-items:center;
+  background:rgba(8,10,19,.68);backdrop-filter:blur(18px) saturate(1.4);
+  border-bottom:1px solid transparent;transition:border-color .3s,background .3s;
+}
+.nav.scrolled{border-bottom-color:var(--border);background:rgba(8,10,19,.88);}
+.nav__inner{width:100%;display:flex;align-items:center;justify-content:space-between;gap:24px;}
+.nav__brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:19px;text-decoration:none;}
+.nav__brand .logo-mark{width:36px;height:36px;}
+.nav__links{display:flex;gap:6px;list-style:none;padding:0;margin:0;}
+.nav__links a{
+  text-decoration:none;color:var(--text-dim);font-size:14.5px;font-weight:600;padding:9px 15px;border-radius:999px;
+  transition:color .2s,background .2s;
+}
+.nav__links a:hover{color:var(--text);background:var(--surface);}
+.nav__cta{display:flex;align-items:center;gap:10px;}
+.nav__toggle{display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:8px;}
+@media(max-width:920px){
+  .nav__links{display:none;}
+  .nav__cta .btn--secondary{display:none;}
+}
+
+/* Bottom nav (mobile) */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;display:none;
+  background:rgba(10,13,24,.92);backdrop-filter:blur(20px);border-top:1px solid var(--border);
+  padding:8px 6px calc(8px + env(safe-area-inset-bottom));
+}
+@media(max-width:920px){.bottom-nav{display:flex;justify-content:space-around;}}
+.bottom-nav button{
+  background:none;border:none;color:var(--text-faint);display:flex;flex-direction:column;align-items:center;gap:4px;
+  font-size:10.5px;font-weight:700;padding:6px 8px;border-radius:12px;cursor:pointer;transition:color .2s;
+}
+.bottom-nav button.active,.bottom-nav button:hover{color:var(--cyan);}
+.bottom-nav svg{width:21px;height:21px;}
+
+/* ============================= HERO ============================= */
+.hero{
+  position:relative;padding:calc(var(--nav-h) + 64px) 0 90px;overflow:hidden;
+}
+.hero__grid{
+  display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;
+}
+@media(max-width:980px){.hero__grid{grid-template-columns:1fr;gap:48px;}}
+.hero__content .eyebrow{margin-bottom:22px;}
+.hero h1{font-size:clamp(38px,5.6vw,68px);line-height:1.03;font-weight:700;}
+.hero h1 em{font-style:normal;background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero__sub{font-size:18px;margin-top:22px;max-width:480px;}
+.hero__cta-row{display:flex;gap:14px;margin-top:34px;flex-wrap:wrap;}
+.hero__trust{display:flex;gap:22px;margin-top:34px;flex-wrap:wrap;}
+.hero__trust span{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--text-dim);font-weight:600;}
+.hero__trust svg{width:16px;height:16px;color:var(--mint);flex-shrink:0;}
+
+/* Hero visual: animated map card */
+.hero__visual{position:relative;}
+.hero-map-card{
+  position:relative;border-radius:var(--radius-xl);overflow:hidden;
+  background:linear-gradient(160deg,rgba(20,26,46,.9),rgba(10,13,23,.95));
+  border:1px solid var(--border-hi);box-shadow:var(--shadow-glow);
+  padding:22px;aspect-ratio:4/4.6;
+}
+.hero-map-card__grid{position:absolute;inset:0;opacity:.5;}
+.hero-map-card__head{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:2;}
+.hero-map-card__head .pill{
+  font-family:var(--font-mono);font-size:11px;color:var(--mint);background:rgba(52,211,153,.1);
+  border:1px solid rgba(52,211,153,.3);padding:5px 10px;border-radius:999px;display:flex;align-items:center;gap:6px;
+}
+.hero-map-card__head .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--mint);animation:pulseDot 1.6s infinite;}
+.route-dot-pulse{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 0 rgba(61,127,255,.7);animation:ripple 2.4s infinite;}
+@keyframes ripple{
+  0%{box-shadow:0 0 0 0 rgba(61,127,255,.55);}
+  70%{box-shadow:0 0 0 18px rgba(61,127,255,0);}
+  100%{box-shadow:0 0 0 0 rgba(61,127,255,0);}
+}
+@keyframes pulseDot{0%,100%{opacity:1;}50%{opacity:.3;}}
+.hero-map-card__float{
+  position:absolute;z-index:3;background:rgba(13,17,29,.88);backdrop-filter:blur(10px);
+  border:1px solid var(--border-hi);border-radius:16px;padding:14px 16px;box-shadow:0 18px 40px -14px rgba(0,0,0,.6);
+  animation:floaty 5s ease-in-out infinite;
+}
+@keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+.float-card--stop{left:16px;bottom:120px;animation-delay:.3s;}
+.float-card--bus{right:14px;top:96px;animation-delay:1.1s;width:168px;}
+.float-card--eta{left:50%;transform:translateX(-50%);bottom:24px;animation-delay:.6s;text-align:center;}
+.float-card .label{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);font-weight:700;}
+.float-card .value{font-family:var(--font-display);font-size:17px;margin-top:3px;}
+.float-card .value small{font-family:var(--font-mono);font-size:12px;color:var(--cyan);font-weight:500;margin-left:4px;}
+.route-line-svg{position:absolute;inset:0;z-index:1;}
+.route-line-path{fill:none;stroke:url(#heroLineGrad);stroke-width:2.5;stroke-dasharray:6 8;animation:dashMove 22s linear infinite;}
+@keyframes dashMove{to{stroke-dashoffset:-400;}}
+
+/* ============================= CARDS / GLASS ============================= */
+.glass{
+  background:linear-gradient(160deg,var(--surface),rgba(255,255,255,.015));
+  border:1px solid var(--border);border-radius:var(--radius-lg);
+  backdrop-filter:blur(14px);
+}
+.glass-strong{background:linear-gradient(160deg,var(--surface-2),var(--surface));border:1px solid var(--border-hi);}
+
+/* ============================= JOURNEY FINDER ============================= */
+.finder-card{padding:34px;border-radius:var(--radius-xl);}
+.finder-fields{display:grid;grid-template-columns:1fr auto 1fr auto;gap:12px;align-items:end;}
+@media(max-width:860px){.finder-fields{grid-template-columns:1fr;}}
+.field label{display:block;font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint);margin-bottom:8px;}
+.field-input{
+  display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.04);border:1.5px solid var(--border);
+  border-radius:var(--radius-md);padding:14px 16px;transition:border-color .2s,background .2s;
+}
+.field-input:focus-within{border-color:var(--blue);background:rgba(61,127,255,.06);}
+.field-input svg{flex-shrink:0;color:var(--text-faint);width:19px;height:19px;}
+.field-input input{background:none;border:none;color:var(--text);font-size:15px;width:100%;outline:none;}
+.field-input input::placeholder{color:var(--text-faint);}
+.swap-btn{
+  width:44px;height:44px;border-radius:50%;background:var(--surface-2);border:1px solid var(--border);
+  color:var(--cyan);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .3s var(--ease),background .2s;
+  margin-bottom:2px;
+}
+.swap-btn:hover{background:var(--surface-hi);transform:rotate(180deg);}
+@media(max-width:860px){.swap-btn{display:none;}}
+.chip-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px;}
+.chip{
+  font-size:13px;font-weight:600;padding:9px 15px;border-radius:999px;background:var(--surface);
+  border:1px solid var(--border);color:var(--text-dim);cursor:pointer;transition:all .2s var(--ease);
+}
+.chip:hover{border-color:var(--blue-soft);color:var(--text);background:rgba(61,127,255,.1);transform:translateY(-1px);}
+.chip.active{background:var(--grad-primary);color:#04101f;border-color:transparent;}
+.chip-label{font-size:12px;color:var(--text-faint);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-top:22px;margin-bottom:0;display:block;}
+
+.finder-actions{display:flex;justify-content:flex-end;margin-top:24px;gap:12px;}
+.location-banner{
+  display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:14px;margin-top:18px;
+  background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);font-size:13.5px;color:#bdf5df;
+}
+.location-banner.warn{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.28);color:#ffe6a8;}
+.location-banner svg{flex-shrink:0;width:18px;height:18px;}
+
+/* Result / route cards */
+.result-area{margin-top:34px;}
+.route-result{
+  display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;
+  padding:22px;border-radius:var(--radius-lg);margin-bottom:14px;
+  animation:slideFade .5s var(--ease) both;
+}
+@keyframes slideFade{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.route-badge{
+  width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-weight:700;font-size:19px;color:#04101f;flex-shrink:0;
+}
+.rb-blue{background:linear-gradient(150deg,#3d7fff,#7fa8ff);}
+.rb-cyan{background:linear-gradient(150deg,#22d3ee,#67e8f9);}
+.rb-purple{background:linear-gradient(150deg,#a855f7,#c084fc);}
+.rb-pink{background:linear-gradient(150deg,#ec4899,#f472b6);}
+.rb-mint{background:linear-gradient(150deg,#34d399,#6ee7b7);}
+.route-result__body h3{font-size:17px;}
+.route-result__dest{font-size:13.5px;color:var(--text-dim);margin-top:3px;}
+.route-result__meta{display:flex;flex-wrap:wrap;gap:14px;margin-top:12px;}
+.meta-pill{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--text-dim);font-weight:600;}
+.meta-pill svg{width:14px;height:14px;color:var(--text-faint);}
+.route-result__status{text-align:right;}
+.status-badge{
+  display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 12px;border-radius:999px;
+  font-family:var(--font-mono);
+}
+.status-ontime{background:rgba(52,211,153,.12);color:#5ef2b8;border:1px solid rgba(52,211,153,.35);}
+.status-arriving{background:rgba(34,211,238,.12);color:#67e8f9;border:1px solid rgba(34,211,238,.35);}
+.status-delayed{background:rgba(251,191,36,.12);color:#ffd873;border:1px solid rgba(251,191,36,.35);}
+.route-result__arrival{font-family:var(--font-mono);font-size:22px;font-weight:600;margin-top:8px;}
+.route-result__transfer{
+  grid-column:1/-1;font-size:12.5px;color:var(--amber);display:flex;align-items:center;gap:7px;
+  padding-top:12px;margin-top:2px;border-top:1px dashed var(--border);
+}
+@media(max-width:640px){.route-result{grid-template-columns:auto 1fr;}.route-result__status{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;text-align:left;}}
+
+.empty-state{
+  text-align:center;padding:48px 24px;border-radius:var(--radius-lg);border:1px dashed var(--border-hi);
+}
+.empty-state svg{width:40px;height:40px;color:var(--text-faint);margin:0 auto 14px;}
+.empty-state h4{font-size:16px;margin-bottom:6px;}
+.empty-state p{font-size:14px;max-width:340px;margin:0 auto;}
+
+/* skeleton */
+.skeleton-row{height:88px;border-radius:var(--radius-lg);margin-bottom:14px;
+  background:linear-gradient(90deg,var(--surface) 0%,var(--surface-2) 50%,var(--surface) 100%);
+  background-size:200% 100%;animation:shimmer 1.3s infinite;}
+@keyframes shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+
+/* Dashboard */
+.dash-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:38px;}
+@media(max-width:980px){.dash-grid{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:600px){.dash-grid{grid-template-columns:repeat(2,1fr);}}
+.dash-card{padding:18px 16px;border-radius:16px;text-align:left;}
+.dash-card .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);font-weight:700;}
+.dash-card .value{font-family:var(--font-display);font-size:17px;margin-top:8px;line-height:1.25;}
+.dash-card svg{width:18px;height:18px;color:var(--cyan);margin-bottom:10px;}
+
+.saved-stops{margin-top:26px;}
+.saved-stops-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.saved-stops-head h4{font-size:14px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
+.saved-chip-row{display:flex;flex-wrap:wrap;gap:10px;}
+.saved-chip{
+  display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--border);
+  border-radius:999px;padding:8px 8px 8px 16px;font-size:13px;font-weight:600;
+}
+.saved-chip button{background:var(--surface-2);border:none;color:var(--text-dim);width:22px;height:22px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.saved-chip button:hover{background:var(--red);color:#fff;}
+
+/* ============================= NEAREST STOP ============================= */
+.nearest-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;}
+@media(max-width:900px){.nearest-grid{grid-template-columns:1fr;}}
+.nearest-card{padding:32px;border-radius:var(--radius-xl);position:relative;overflow:hidden;}
+.nearest-card::before{
+  content:"";position:absolute;inset:0;background:var(--grad-ghost);opacity:.5;pointer-events:none;
+}
+.nearest-card__top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;}
+.nearest-card__badge{
+  display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:12px;color:var(--mint);
+  background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);padding:6px 12px;border-radius:999px;
+}
+.nearest-card h3{font-size:26px;margin-top:18px;position:relative;}
+.nearest-card__dist{display:flex;gap:22px;margin-top:14px;position:relative;}
+.nearest-card__dist div span{display:block;}
+.nearest-card__dist .big{font-family:var(--font-mono);font-size:24px;font-weight:600;color:var(--cyan);}
+.nearest-card__dist .small{font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+.nearest-divider{height:1px;background:var(--border);margin:24px 0;position:relative;}
+.next-bus-row{display:flex;align-items:center;gap:16px;position:relative;}
+.next-bus-row .rt{flex:1;}
+.next-bus-row .rt .num{font-size:14px;font-weight:700;}
+.next-bus-row .rt .to{font-size:13px;color:var(--text-faint);margin-top:2px;}
+.next-bus-row .time{font-family:var(--font-mono);font-size:24px;font-weight:600;}
+.nearest-actions{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;position:relative;}
+.nearest-actions .btn{flex:1;}
+
+.stop-list{display:flex;flex-direction:column;gap:12px;}
+.stop-item{
+  display:flex;align-items:center;gap:16px;padding:16px 18px;border-radius:16px;cursor:pointer;
+  transition:border-color .2s,background .2s,transform .2s var(--ease);
+}
+.stop-item:hover{border-color:var(--border-hi);transform:translateX(3px);}
+.stop-item.selected{border-color:var(--blue);background:rgba(61,127,255,.08);}
+.stop-item__rank{
+  width:34px;height:34px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:13px;color:var(--text-dim);flex-shrink:0;
+}
+.stop-item__body{flex:1;min-width:0;}
+.stop-item__body h4{font-size:14.5px;}
+.stop-item__body .sub{font-size:12.5px;color:var(--text-faint);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;}
+.stop-item__dist{text-align:right;font-family:var(--font-mono);font-size:13px;color:var(--cyan);flex-shrink:0;}
+.stop-item__dist small{display:block;font-family:var(--font-body);color:var(--text-faint);font-size:11px;margin-top:2px;}
+.tag{font-size:10.5px;padding:2px 8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);}
+
+/* ============================= ARRIVALS ============================= */
+.arrival-board{border-radius:var(--radius-xl);overflow:hidden;}
+.arrival-board__head{
+  display:grid;grid-template-columns:70px 1fr 110px 120px;gap:10px;padding:18px 24px;
+  font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);font-weight:700;
+  border-bottom:1px solid var(--border);
+}
+.arrival-row{
+  display:grid;grid-template-columns:70px 1fr 110px 120px;gap:10px;align-items:center;padding:18px 24px;
+  border-bottom:1px solid var(--border);transition:background .2s;
+}
+.arrival-row:last-child{border-bottom:none;}
+.arrival-row:hover{background:var(--surface);}
+.arrival-row .rt-badge{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:14px;color:#04101f;}
+.arrival-row .rt-name{font-size:14.5px;font-weight:700;}
+.arrival-row .rt-dest{font-size:12.5px;color:var(--text-faint);margin-top:2px;}
+.arrival-row .countdown{font-family:var(--font-mono);font-size:19px;font-weight:600;}
+.arrival-row .countdown.pulse{animation:countdownPulse 1s infinite;color:var(--cyan);}
+@keyframes countdownPulse{0%,100%{opacity:1;}50%{opacity:.55;}}
+@media(max-width:700px){
+  .arrival-board__head{display:none;}
+  .arrival-row{grid-template-columns:40px 1fr auto;}
+  .arrival-row .countdown-wrap{grid-column:3;text-align:right;}
+  .arrival-row .status-badge{display:none;}
+}
+.prototype-tag{
+  display:flex;align-items:center;gap:8px;padding:14px 24px;font-size:12.5px;color:var(--text-faint);
+  background:rgba(255,255,255,.02);border-top:1px solid var(--border);
+}
+.prototype-tag svg{width:15px;height:15px;flex-shrink:0;color:var(--amber);}
+
+/* ============================= MAP ============================= */
+.map-shell{border-radius:var(--radius-xl);overflow:hidden;position:relative;}
+.map-toolbar{display:flex;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;align-items:center;}
+.map-toolbar .field-input{flex:1;min-width:180px;padding:10px 14px;}
+.map-canvas-wrap{position:relative;aspect-ratio:16/9;background:
+  linear-gradient(160deg,rgba(15,20,36,.9),rgba(9,12,21,.95));}
+.map-canvas-wrap svg{width:100%;height:100%;}
+.map-legend{
+  position:absolute;bottom:14px;left:14px;display:flex;gap:14px;flex-wrap:wrap;background:rgba(9,12,21,.7);
+  backdrop-filter:blur(8px);padding:10px 14px;border-radius:12px;border:1px solid var(--border);
+}
+.map-legend span{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-dim);font-weight:600;}
+.map-legend i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+.map-note{position:absolute;top:14px;right:14px;background:rgba(9,12,21,.75);backdrop-filter:blur(8px);
+  border:1px solid var(--border);padding:8px 13px;border-radius:999px;font-size:11px;color:var(--text-faint);font-family:var(--font-mono);}
+
+/* ============================= ROUTES ============================= */
+.routes-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;}
+.route-card{padding:26px;border-radius:var(--radius-lg);cursor:pointer;transition:transform .25s var(--ease),border-color .25s;}
+.route-card:hover{transform:translateY(-5px);border-color:var(--border-hi);}
+.route-card__head{display:flex;align-items:center;gap:14px;}
+.route-card__head .route-badge{width:48px;height:48px;font-size:16px;border-radius:14px;}
+.route-card__head h3{font-size:17px;}
+.route-card__head .dest{font-size:12.5px;color:var(--text-faint);margin-top:2px;}
+.route-card__stops{display:flex;flex-wrap:wrap;gap:7px;margin-top:18px;}
+.route-card__foot{display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid var(--border);}
+.route-card__foot .freq{font-size:12.5px;color:var(--text-dim);}
+.route-card__foot .a11y{display:flex;gap:6px;}
+.route-card__foot svg{width:16px;height:16px;color:var(--text-faint);}
+.route-detail{margin-top:20px;padding-top:18px;border-top:1px dashed var(--border);display:none;}
+.route-detail.open{display:block;animation:slideFade .3s var(--ease) both;}
+.route-detail .sched-row{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;color:var(--text-dim);}
+.route-detail .sched-row b{color:var(--text);font-family:var(--font-mono);font-weight:600;}
+
+/* ============================= CHAT SHOWCASE ============================= */
+.chat-showcase{display:grid;grid-template-columns:.85fr 1.15fr;gap:44px;align-items:center;}
+@media(max-width:960px){.chat-showcase{grid-template-columns:1fr;}}
+.chat-points{display:flex;flex-direction:column;gap:20px;margin-top:30px;}
+.chat-point{display:flex;gap:16px;}
+.chat-point .num{
+  font-family:var(--font-mono);font-size:13px;color:var(--cyan);width:34px;height:34px;border-radius:10px;
+  background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.chat-point h4{font-size:15px;}
+.chat-point p{font-size:13.5px;margin-top:4px;}
+.chat-prompt-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:26px;}
+
+.chat-preview{border-radius:var(--radius-xl);overflow:hidden;height:560px;display:flex;flex-direction:column;box-shadow:var(--shadow-glow);}
+.chat-header{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02);}
+.chat-avatar{
+  width:42px;height:42px;border-radius:13px;background:var(--grad-accent);display:flex;align-items:center;justify-content:center;
+  font-size:19px;flex-shrink:0;position:relative;
+}
+.chat-avatar .dot{position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;background:var(--mint);border:2px solid #0e1424;border-radius:50%;}
+.chat-header h4{font-size:15px;}
+.chat-header .sub{font-size:12px;color:var(--mint);margin-top:1px;}
+.chat-body{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth;}
+.msg{max-width:82%;padding:12px 15px;border-radius:16px;font-size:14px;line-height:1.55;animation:msgIn .35s var(--ease) both;}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px) scale(.98);}to{opacity:1;transform:translateY(0) scale(1);}}
+.msg.bot{align-self:flex-start;background:var(--surface-2);border:1px solid var(--border);border-bottom-left-radius:5px;}
+.msg.user{align-self:flex-end;background:var(--grad-primary);color:#04101f;font-weight:600;border-bottom-right-radius:5px;}
+.msg.bot b{color:var(--cyan);}
+.msg-quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;align-self:flex-start;max-width:90%;}
+.typing{align-self:flex-start;display:flex;gap:4px;padding:14px 16px;background:var(--surface-2);border-radius:16px;border:1px solid var(--border);}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--text-faint);animation:typingDot 1.2s infinite;}
+.typing span:nth-child(2){animation-delay:.2s;}
+.typing span:nth-child(3){animation-delay:.4s;}
+@keyframes typingDot{0%,60%,100%{opacity:.3;transform:translateY(0);}30%{opacity:1;transform:translateY(-3px);}}
+.chat-suggest{display:flex;gap:8px;padding:0 20px 14px;flex-wrap:wrap;}
+.chat-input-row{display:flex;gap:10px;padding:16px 18px;border-top:1px solid var(--border);background:rgba(255,255,255,.02);}
+.chat-input-row input{
+  flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:999px;padding:12px 18px;
+  color:var(--text);outline:none;font-size:14px;transition:border-color .2s;
+}
+.chat-input-row input:focus{border-color:var(--blue);}
+.chat-send{
+  width:44px;height:44px;border-radius:50%;background:var(--grad-primary);border:none;color:#04101f;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform .2s;
+}
+.chat-send:hover{transform:scale(1.08);}
+.chat-send svg{width:18px;height:18px;}
+
+/* Floating chatbot */
+.chat-fab{
+  position:fixed;bottom:26px;right:26px;z-index:300;width:64px;height:64px;border-radius:50%;
+  background:var(--grad-accent);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 14px 34px -8px rgba(168,85,247,.55);transition:transform .3s var(--ease);
+}
+.chat-fab:hover{transform:scale(1.08) rotate(-4deg);}
+.chat-fab svg{width:27px;height:27px;color:#fff;}
+.chat-fab .badge{
+  position:absolute;top:-2px;right:-2px;width:16px;height:16px;background:var(--red);border-radius:50%;
+  border:2px solid var(--bg);font-size:0;
+}
+@media(max-width:920px){.chat-fab{bottom:80px;}}
+
+.chat-widget{
+  position:fixed;bottom:106px;right:26px;z-index:300;width:392px;max-width:calc(100vw - 32px);height:min(600px,72vh);
+  border-radius:26px;overflow:hidden;display:flex;flex-direction:column;
+  background:linear-gradient(165deg,#10162a,#0a0d18);border:1px solid var(--border-hi);box-shadow:0 30px 80px -20px rgba(0,0,0,.7);
+  transform:translateY(24px) scale(.96);opacity:0;pointer-events:none;transition:all .3s var(--ease);
+}
+.chat-widget.open{transform:translateY(0) scale(1);opacity:1;pointer-events:auto;}
+@media(max-width:560px){.chat-widget{right:16px;bottom:90px;width:calc(100vw - 32px);height:70vh;}}
+.chat-widget .chat-header{position:relative;}
+.chat-widget .chat-close{position:absolute;right:16px;top:50%;transform:translateY(-50%);background:var(--surface-2);border:1px solid var(--border);color:var(--text-dim);width:32px;height:32px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.chat-widget .chat-close:hover{color:var(--text);}
+
+/* ============================= HOW IT WORKS ============================= */
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+@media(max-width:860px){.how-grid{grid-template-columns:1fr;}}
+.how-card{padding:30px 26px;border-radius:var(--radius-lg);position:relative;}
+.how-card .step-num{font-family:var(--font-mono);font-size:13px;color:var(--text-faint);}
+.how-card .step-icon{
+  width:52px;height:52px;border-radius:15px;background:var(--grad-ghost);border:1px solid var(--border-hi);
+  display:flex;align-items:center;justify-content:center;margin:16px 0 18px;
+}
+.how-card .step-icon svg{width:24px;height:24px;color:var(--cyan);}
+.how-card h3{font-size:18px;}
+.how-card p{font-size:14px;margin-top:8px;}
+.how-connector{position:absolute;top:56px;right:-13px;width:26px;height:1px;background:linear-gradient(90deg,var(--border),transparent);}
+@media(max-width:860px){.how-connector{display:none;}}
+
+/* ============================= WHY / VALUE ============================= */
+.why-layout{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start;}
+@media(max-width:960px){.why-layout{grid-template-columns:1fr;}}
+.why-grid{display:grid;grid-template-columns:1fr;gap:16px;}
+.why-card{display:flex;gap:16px;padding:22px;border-radius:16px;}
+.why-card .icon{width:44px;height:44px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.why-card .icon svg{width:20px;height:20px;color:var(--purple);}
+.why-card h4{font-size:15.5px;}
+.why-card p{font-size:13.5px;margin-top:5px;}
+
+.value-card{padding:34px;border-radius:var(--radius-xl);position:sticky;top:110px;}
+.value-card .eyebrow{margin-bottom:20px;}
+.value-row{display:grid;grid-template-columns:88px 1fr;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);}
+.value-row:last-of-type{border-bottom:none;}
+.value-row .k{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;padding-top:2px;}
+.value-row .v{font-size:14.5px;color:var(--text);font-weight:500;line-height:1.55;}
+.value-row .v b{color:var(--cyan);font-weight:700;}
+
+/* ============================= SAFETY ============================= */
+.safety-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+@media(max-width:860px){.safety-grid{grid-template-columns:1fr;}}
+.safety-card{padding:28px;border-radius:var(--radius-lg);}
+.safety-card .icon{width:48px;height:48px;border-radius:14px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.25);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+.safety-card .icon svg{width:22px;height:22px;color:var(--mint);}
+.safety-card h3{font-size:16.5px;}
+.safety-card p{font-size:13.5px;margin-top:9px;}
+.safety-card ul{margin-top:12px;display:flex;flex-direction:column;gap:8px;}
+.safety-card li{font-size:12.5px;color:var(--text-dim);display:flex;gap:8px;align-items:flex-start;}
+.safety-card li svg{width:14px;height:14px;color:var(--mint);flex-shrink:0;margin-top:2px;}
+
+/* Prototype notice */
+.proto-banner{
+  display:flex;align-items:center;gap:22px;padding:34px;border-radius:var(--radius-xl);
+  background:linear-gradient(120deg,rgba(251,191,36,.08),rgba(61,127,255,.06));border:1px solid rgba(251,191,36,.25);
+}
+@media(max-width:700px){.proto-banner{flex-direction:column;text-align:center;}}
+.proto-banner .icon{width:56px;height:56px;border-radius:16px;background:rgba(251,191,36,.14);border:1px solid rgba(251,191,36,.35);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.proto-banner .icon svg{width:26px;height:26px;color:var(--amber);}
+.proto-banner h3{font-size:19px;}
+.proto-banner p{font-size:14px;margin-top:8px;}
+
+/* Footer */
+.footer{padding:70px 0 40px;border-top:1px solid var(--border);margin-top:40px;}
+.footer__top{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px;}
+@media(max-width:860px){.footer__top{grid-template-columns:1fr 1fr;}}
+@media(max-width:560px){.footer__top{grid-template-columns:1fr;}}
+.footer__brand{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:700;font-size:19px;}
+.footer__brand svg{width:32px;height:32px;}
+.footer p.tag{margin-top:14px;font-size:13.5px;max-width:260px;}
+.footer h5{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-faint);margin-bottom:16px;}
+.footer ul{display:flex;flex-direction:column;gap:11px;}
+.footer a{font-size:13.5px;color:var(--text-dim);text-decoration:none;transition:color .2s;}
+.footer a:hover{color:var(--cyan);}
+.footer__bottom{
+  margin-top:56px;padding-top:26px;border-top:1px solid var(--border);display:flex;justify-content:space-between;
+  flex-wrap:wrap;gap:12px;font-size:12.5px;color:var(--text-faint);
+}
+
+/* Toast */
+.toast-stack{position:fixed;bottom:24px;left:24px;z-index:500;display:flex;flex-direction:column;gap:10px;}
+@media(max-width:920px){.toast-stack{bottom:150px;}}
+.toast{
+  display:flex;align-items:center;gap:10px;padding:13px 18px;border-radius:14px;background:rgba(14,20,36,.95);
+  border:1px solid var(--border-hi);backdrop-filter:blur(12px);font-size:13.5px;font-weight:600;box-shadow:0 14px 34px -10px rgba(0,0,0,.6);
+  animation:toastIn .35s var(--ease) both;max-width:280px;
+}
+.toast.leaving{animation:toastOut .3s var(--ease) forwards;}
+@keyframes toastIn{from{opacity:0;transform:translateX(-16px);}to{opacity:1;transform:translateX(0);}}
+@keyframes toastOut{to{opacity:0;transform:translateX(-16px);}}
+.toast svg{width:17px;height:17px;color:var(--mint);flex-shrink:0;}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+/* directions modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(4,6,12,.72);backdrop-filter:blur(4px);z-index:400;
+  display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.modal-overlay.open{opacity:1;pointer-events:auto;}
+.modal-card{
+  width:100%;max-width:440px;border-radius:24px;padding:30px;background:linear-gradient(165deg,#121729,#0a0d18);
+  border:1px solid var(--border-hi);transform:translateY(16px) scale(.97);transition:transform .3s var(--ease);max-height:80vh;overflow-y:auto;
+}
+.modal-overlay.open .modal-card{transform:translateY(0) scale(1);}
+.modal-card h3{font-size:19px;margin-bottom:6px;}
+.modal-card .close-x{position:absolute;top:20px;right:20px;}
+.direction-step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);}
+.direction-step:last-child{border-bottom:none;}
+.direction-step .n{width:30px;height:30px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:12.5px;flex-shrink:0;}
+.direction-step p{font-size:13.5px;color:var(--text);}
+.direction-step .dur{font-size:11.5px;color:var(--text-faint);margin-top:3px;}
+
+/* animate-on-scroll */
+[data-animate]{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--ease);}
+[data-animate].in-view{opacity:1;transform:translateY(0);}
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<!-- decorative route rail -->
+<div class="route-rail" aria-hidden="true">
+  <svg width="34" height="100vh" viewBox="0 0 34 800" preserveAspectRatio="none" style="height:100vh;">
+    <defs>
+      <linearGradient id="railGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#22d3ee"/>
+        <stop offset="50%" stop-color="#3d7fff"/>
+        <stop offset="100%" stop-color="#a855f7"/>
+      </linearGradient>
+    </defs>
+    <path class="rail-track" id="railTrack" d="M17 0 L17 800"/>
+    <path class="rail-fill" id="railFill" d="M17 0 L17 800" stroke-dasharray="800" stroke-dashoffset="800"/>
+    <circle class="rail-bus" id="railBus" r="6" fill="#22d3ee" cx="17" cy="0"/>
+  </svg>
+</div>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="siteNav">
+  <div class="wrap nav__inner">
+    <a href="#top" class="nav__brand" id="logoHome">
+      <svg class="logo-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#3d7fff"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
+        <rect width="40" height="40" rx="12" fill="url(#logoGrad)"/>
+        <path d="M11 24.5V15a3 3 0 013-3h12a3 3 0 013 3v9.5" stroke="#04101f" stroke-width="2" stroke-linecap="round"/>
+        <rect x="12" y="16" width="16" height="6.5" rx="1.5" fill="#04101f"/>
+        <circle cx="15" cy="27" r="2.1" fill="#04101f"/>
+        <circle cx="25" cy="27" r="2.1" fill="#04101f"/>
+        <path d="M20 8v3" stroke="#04101f" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      BusBuddy
+    </a>
+    <ul class="nav__links">
+      <li><a href="#top">Home</a></li>
+      <li><a href="#planner">Find a Bus</a></li>
+      <li><a href="#nearest">Stops</a></li>
+      <li><a href="#arrivals">Arrivals</a></li>
+      <li><a href="#chat" id="navChatLink">Chat</a></li>
+      <li><a href="#why">About</a></li>
+    </ul>
+    <div class="nav__cta">
+      <button class="btn btn--secondary btn--sm" id="navLocationBtn">Use My Location</button>
+      <button class="btn btn--primary btn--sm" id="navFindBtn">Find My Bus</button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="top">
+  <div class="wrap hero__grid">
+    <div class="hero__content" data-animate>
+      <span class="eyebrow">Live Journey Planner</span>
+      <h1>Never miss <em>your bus</em> again.</h1>
+      <p class="hero__sub">Find the nearest stop, see live-style arrival times, and get the best route in seconds — no confusing timetables, no guesswork.</p>
+      <div class="hero__cta-row">
+        <button class="btn btn--primary" id="heroFindBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          Find My Bus
+        </button>
+        <button class="btn btn--secondary" id="heroExploreBtn">Explore Stops</button>
+      </div>
+      <div class="hero__trust">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>No account required</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Simple directions</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Accessibility-aware</span>
+      </div>
+    </div>
+
+    <div class="hero__visual" data-animate style="transition-delay:.1s;">
+      <div class="hero-map-card">
+        <svg class="route-line-svg" viewBox="0 0 320 380" aria-hidden="true">
+          <defs><linearGradient id="heroLineGrad" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#22d3ee"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
+          <path class="route-line-path" d="M40 300 C 80 260, 60 200, 110 175 S 200 140, 190 90 S 250 55, 270 40"/>
+        </svg>
+        <div class="hero-map-card__grid">
+          <svg width="100%" height="100%" viewBox="0 0 320 380" aria-hidden="true">
+            <g stroke="rgba(255,255,255,.06)" stroke-width="1">
+              <path d="M0 60H320"/><path d="M0 130H320"/><path d="M0 200H320"/><path d="M0 270H320"/><path d="M0 330H320"/>
+              <path d="M60 0V380"/><path d="M140 0V380"/><path d="M220 0V380"/><path d="M280 0V380"/>
+            </g>
+          </svg>
+        </div>
+        <div class="hero-map-card__head">
+          <span class="pill">Demo data</span>
+          <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-faint);">18:24</span>
+        </div>
+        <div class="route-dot-pulse" style="left:36px;top:296px;" aria-hidden="true"></div>
+        <div class="route-dot-pulse" style="left:264px;top:36px;background:var(--purple);animation-delay:.6s;" aria-hidden="true"></div>
+
+        <div class="hero-map-card__float float-card--stop glass">
+          <div class="label">Nearest stop</div>
+          <div class="value">Green Street<small>120m</small></div>
+        </div>
+        <div class="hero-map-card__float float-card--bus glass">
+          <div class="label">Next bus</div>
+          <div class="value" style="display:flex;align-items:center;gap:8px;">
+            <span class="route-badge rb-blue" style="width:28px;height:28px;font-size:12px;border-radius:8px;">24</span>
+            City Centre
+          </div>
+        </div>
+        <div class="hero-map-card__float float-card--eta glass">
+          <div class="label">Arriving in</div>
+          <div class="value" style="color:var(--cyan);font-size:22px;">4 min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JOURNEY FINDER ============ -->
+<section class="section" id="planner">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">Quick Journey Finder</span>
+      <h2>Where are you <span class="grad-text">going?</span></h2>
+      <p>Tell BusBuddy your destination and we'll match you with the nearest stop, the right bus, and a live-style arrival estimate.</p>
+    </div>
+
+    <div class="glass finder-card" data-animate>
+      <div class="finder-fields">
+        <div class="field">
+          <label for="fromInput">Current location</label>
+          <div class="field-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7.4 7-12.5A7 7 0 105 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.4"/></svg>
+            <input type="text" id="fromInput" value="Set my location…" readonly aria-describedby="fromHint">
+          </div>
+          <div id="fromHint" class="sr-only">Use the location banner below to detect your position, or type a starting point manually.</div>
+        </div>
+        <button class="swap-btn" id="swapBtn" aria-label="Swap starting point and destination" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 3l4 4-4 4M21 7H7M7 21l-4-4 4-4M3 17h14"/></svg>
+        </button>
+        <div class="field">
+          <label for="toInput">Destination</label>
+          <div class="field-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="toInput" placeholder="e.g. City Centre, School, Library…" autocomplete="off">
+          </div>
+        </div>
+        <button class="btn btn--primary" id="searchBtn" type="button" style="height:52px;">Search</button>
+      </div>
+
+      <span class="chip-label">Popular destinations</span>
+      <div class="chip-row" id="chipRow" role="group" aria-label="Popular destinations">
+        <button class="chip" data-dest="School">School</button>
+        <button class="chip" data-dest="City Centre">City Centre</button>
+        <button class="chip" data-dest="Library">Library</button>
+        <button class="chip" data-dest="Shopping Centre">Shopping Centre</button>
+        <button class="chip" data-dest="Hospital">Hospital</button>
+        <button class="chip" data-dest="Sports Centre">Sports Centre</button>
+      </div>
+
+      <div id="locationBanner" class="location-banner" style="display:none;" role="status"></div>
+
+      <div class="finder-actions">
+        <button class="btn btn--ghost btn--sm" id="useLocationBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="margin-right:6px;"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="5"/></svg>
+          Use My Location
+        </button>
+      </div>
+
+      <div class="result-area" id="resultArea" aria-live="polite"></div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardWrap" data-animate>
+      <div class="section-head" style="margin-top:64px;margin-bottom:28px;">
+        <span class="eyebrow" style="color:var(--purple);border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.08);">Your Journey at a Glance</span>
+      </div>
+      <div class="dash-grid" id="dashGrid">
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7.4 7-12.5A7 7 0 105 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.4"/></svg><div class="label">Nearest stop</div><div class="value" id="dashStop">Green Street</div></div>
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="3"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg><div class="label">Next bus</div><div class="value" id="dashBus">24 → City Centre</div></div>
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><div class="label">Destination</div><div class="value" id="dashDest">Not set</div></div>
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4a2 2 0 11-2-2M4 21l4.5-9L13 15l3-6M17 4l4 2-4 2"/></svg><div class="label">Walking time</div><div class="value" id="dashWalk">2 min</div></div>
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div class="label">Arrival</div><div class="value" id="dashArrival">4 min</div></div>
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg><div class="label">Trip duration</div><div class="value" id="dashDuration">18 min</div></div>
+      </div>
+
+      <div class="saved-stops">
+        <div class="saved-stops-head">
+          <h4>Saved stops</h4>
+        </div>
+        <div class="saved-chip-row" id="savedChipRow">
+          <span style="font-size:13px;color:var(--text-faint);" id="savedEmptyMsg">No saved stops yet — tap "Save Stop" on any stop to pin it here.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NEAREST STOP + STOP LIST ============ -->
+<section class="section" id="nearest">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">Nearest Stop</span>
+      <h2>Everything you need, <span class="grad-text">right where you stand.</span></h2>
+      <p>Your closest stop, its next bus, and every nearby alternative — ranked by distance.</p>
+    </div>
+
+    <div class="nearest-grid">
+      <div class="glass-strong nearest-card" data-animate>
+        <div class="nearest-card__top">
+          <span class="nearest-card__badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 22s7-7.4 7-12.5A7 7 0 105 9.5C5 14.6 12 22 12 22z"/></svg>Nearest stop</span>
+          <button class="icon-btn" id="saveStopBtn" aria-label="Save this stop">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="saveStopIcon"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          </button>
+        </div>
+        <h3 id="nearestName">Green Street Stop</h3>
+        <div class="nearest-card__dist">
+          <div><span class="big" id="nearestDist">120 m</span><span class="small">away</span></div>
+          <div><span class="big" id="nearestWalk">2 min</span><span class="small">walk</span></div>
+        </div>
+        <div class="nearest-divider"></div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);font-weight:700;margin-bottom:12px;">Next bus</div>
+        <div class="next-bus-row">
+          <span class="route-badge rb-blue" id="nearestBusBadge" style="width:44px;height:44px;font-size:15px;">24</span>
+          <div class="rt"><div class="num" id="nearestBusNum">Route 24 · Downtown Express</div><div class="to" id="nearestBusTo">→ City Centre</div></div>
+          <div class="time" id="nearestBusTime">4<span style="font-size:12px;">min</span></div>
+        </div>
+        <div class="nearest-actions">
+          <button class="btn btn--secondary btn--sm" id="directionsBtn">Directions</button>
+          <button class="btn btn--secondary btn--sm" id="viewStopBtn">View Stop</button>
+          <button class="btn btn--primary btn--sm" id="saveStopBtn2">Save Stop</button>
+        </div>
+      </div>
+
+      <div class="glass nearest-card" style="padding:28px;" data-animate style="transition-delay:.08s;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+          <h4 style="font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);">Stops near you</h4>
+          <span style="font-size:12px;color:var(--text-faint);font-family:var(--font-mono);" id="stopCount">5 stops</span>
+        </div>
+        <div class="stop-list" id="stopList"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MAP ============ -->
+<section class="section" id="map" style="padding-top:0;">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">Interactive Map</span>
+      <h2>See your <span class="grad-text">whole journey</span> at once.</h2>
+      <p>A simulated map for this prototype — showing your location, nearby stops, and the route to your destination.</p>
+    </div>
+    <div class="glass map-shell" data-animate>
+      <div class="map-toolbar">
+        <div class="field-input" style="flex:1;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="mapSearchInput" placeholder="Search this place…">
+        </div>
+        <button class="btn btn--secondary btn--sm" id="mapSearchBtn">Search this place</button>
+        <button class="btn btn--ghost btn--sm" id="mapResetBtn">Reset map</button>
+      </div>
+      <div class="map-canvas-wrap">
+        <div class="map-note">Simulated map · prototype only</div>
+        <svg id="mapSvg" viewBox="0 0 800 450" role="img" aria-label="Simulated map showing your location and nearby bus stops"></svg>
+        <div class="map-legend">
+          <span><i style="background:var(--cyan);"></i>You</span>
+          <span><i style="background:var(--blue);"></i>Stop</span>
+          <span><i style="background:var(--purple);"></i>Selected route</span>
+          <span><i style="background:var(--mint);"></i>Destination</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ROUTES ============ -->
+<section class="section" id="routes">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">Bus Routes</span>
+      <h2>Five routes. <span class="grad-text">One clear network.</span></h2>
+      <p>Tap any route to see its full stop list and sample schedule.</p>
+    </div>
+    <div class="routes-grid" id="routesGrid" data-animate></div>
+  </div>
+</section>
+
+<!-- ============ ARRIVALS ============ -->
+<section class="section" id="arrivals">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">Live-Style Arrivals</span>
+      <h2>Know before you <span class="grad-text">wait.</span></h2>
+      <p>A premium arrival board with animated countdowns — so you always know what's coming next.</p>
+    </div>
+    <div class="glass arrival-board" data-animate>
+      <div class="arrival-board__head">
+        <span>Route</span><span>Destination</span><span>Arrival</span><span>Status</span>
+      </div>
+      <div id="arrivalList"></div>
+      <div class="prototype-tag">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 18a2 2 0 001.7 3h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        Demo / Prototype data — arrival times are illustrative examples, not a live transit feed.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAT ============ -->
+<section class="section" id="chat">
+  <div class="wrap chat-showcase">
+    <div data-animate>
+      <span class="eyebrow" style="color:var(--purple);border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.08);">Chat with Buddy</span>
+      <h2 style="margin-top:16px;">Don't know the stop? <span class="grad-text">Just ask.</span></h2>
+      <p style="font-size:17px;margin-top:14px;">Buddy understands natural questions about stops, routes, arrivals, delays, transfers and directions — not just a handful of canned replies.</p>
+      <div class="chat-points">
+        <div class="chat-point"><span class="num">01</span><div><h4>Understands real questions</h4><p>Ask naturally — "what bus goes to the library?" or "is my bus delayed?" both work.</p></div></div>
+        <div class="chat-point"><span class="num">02</span><div><h4>Uses what it knows</h4><p>If you've shared your location, Buddy uses your nearest stop automatically.</p></div></div>
+        <div class="chat-point"><span class="num">03</span><div><h4>Always honest</h4><p>Buddy is upfront that arrival times are sample data, never real-time.</p></div></div>
+      </div>
+      <div class="chat-prompt-row">
+        <button class="btn btn--secondary btn--sm chip-prompt" data-prompt="Nearest bus stop">Nearest bus stop</button>
+        <button class="btn btn--secondary btn--sm chip-prompt" data-prompt="Next bus">Next bus</button>
+        <button class="btn btn--secondary btn--sm chip-prompt" data-prompt="Bus to school">Bus to school</button>
+        <button class="btn btn--secondary btn--sm chip-prompt" data-prompt="Plan my journey">Plan my journey</button>
+      </div>
+    </div>
+
+    <div class="glass-strong chat-preview" data-animate style="transition-delay:.1s;">
+      <div class="chat-header">
+        <div class="chat-avatar">🚍<span class="dot"></span></div>
+        <div><h4>Buddy</h4><div class="sub">● Your bus assistant</div></div>
+      </div>
+      <div class="chat-body" id="chatBodyInline"></div>
+      <div class="chat-suggest" id="chatSuggestInline">
+        <button class="chip chip-prompt" data-prompt="Nearest bus stop">Nearest bus stop</button>
+        <button class="chip chip-prompt" data-prompt="Next bus">Next bus</button>
+        <button class="chip chip-prompt" data-prompt="Bus to school">Bus to school</button>
+        <button class="chip chip-prompt" data-prompt="Plan my journey">Plan my journey</button>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInputInline" placeholder="Ask Buddy anything…" aria-label="Message Buddy">
+        <button class="chat-send" id="chatSendInline" aria-label="Send message">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">How It Works</span>
+      <h2>Three steps. <span class="grad-text">Zero confusion.</span></h2>
+    </div>
+    <div class="how-grid">
+      <div class="glass how-card" data-animate>
+        <div class="how-connector"></div>
+        <span class="step-num">01</span>
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="5"/></svg></div>
+        <h3>Share your location</h3>
+        <p>BusBuddy finds nearby stops — or you can type a starting point manually, no permission required.</p>
+      </div>
+      <div class="glass how-card" data-animate style="transition-delay:.1s;">
+        <div class="how-connector"></div>
+        <span class="step-num">02</span>
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+        <h3>Choose your destination</h3>
+        <p>We compare available routes and show walking distance, arrival time and journey length.</p>
+      </div>
+      <div class="glass how-card" data-animate style="transition-delay:.2s;">
+        <span class="step-num">03</span>
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="3"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg></div>
+        <h3>Catch your bus</h3>
+        <p>See the next arrival, which stop to board at, and exactly what to do next.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHY BUSBUDDY + ENTREPRENEURSHIP ============ -->
+<section class="section" id="why">
+  <div class="wrap why-layout">
+    <div data-animate>
+      <span class="eyebrow">Why BusBuddy?</span>
+      <h2 style="margin-top:16px;">A small transport problem <span class="grad-text">can cost a lot of time.</span></h2>
+      <p style="font-size:16px;margin-top:12px;">Students and everyday passengers often waste minutes just figuring out where to stand and which bus to trust. BusBuddy turns that uncertainty into one clear answer.</p>
+      <div class="why-grid" style="margin-top:28px;">
+        <div class="glass why-card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div><h4>Missed buses become missed minutes</h4><p>Without a clear estimate, people wait too long, leave too late, or miss a connection entirely.</p></div>
+        </div>
+        <div class="glass why-card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg></div>
+          <div><h4>Information is scattered</h4><p>Stop signs, paper timetables and route maps rarely answer the same question in one place.</p></div>
+        </div>
+        <div class="glass why-card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg></div>
+          <div><h4>Confidence changes behaviour</h4><p>A rider unsure of the correct stop or direction may avoid public transport altogether — clarity brings them back.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-strong value-card" data-animate style="transition-delay:.1s;">
+      <span class="eyebrow">Entrepreneurship Project</span>
+      <h3 style="margin-top:18px;font-size:21px;">Built from a real opportunity</h3>
+      <div style="margin-top:22px;">
+        <div class="value-row"><div class="k">Problem</div><div class="v">Students and bus users can struggle to know their nearest stop, which bus to take, when it arrives, and what to do next.</div></div>
+        <div class="value-row"><div class="k">User</div><div class="v">A <b>student or everyday passenger</b> who wants a quick, clear answer without digging through complicated transport information.</div></div>
+        <div class="value-row"><div class="k">Solution</div><div class="v">A simple bus-stop assistant combining nearby stops, route matching, live-style arrivals and a conversational helper.</div></div>
+        <div class="value-row"><div class="k">Value</div><div class="v"><b>Less confusion. Less waiting uncertainty.</b> Easier journey planning, from door to destination.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SAFETY & PRIVACY ============ -->
+<section class="section" id="safety">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow" style="color:var(--mint);border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.08);">Safety &amp; Privacy</span>
+      <h2>Built to earn your <span class="grad-text">trust.</span></h2>
+      <p>Your location is only ever used to improve journey planning inside this prototype — nothing more.</p>
+    </div>
+    <div class="safety-grid">
+      <div class="glass safety-card" data-animate>
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7.4 7-12.5A7 7 0 105 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.4"/></svg></div>
+        <h3>Location, on your terms</h3>
+        <p>Location access always requires explicit browser permission and is never assumed.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>You can always type a starting point instead</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Denying access never breaks the app</li>
+        </ul>
+      </div>
+      <div class="glass safety-card" data-animate style="transition-delay:.1s;">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></div>
+        <h3>Minimal by design</h3>
+        <p>No accounts, no passwords, no unnecessary personal information collected.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Saved stops stay in your browser only</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Never asked for credentials or payment info</li>
+        </ul>
+      </div>
+      <div class="glass safety-card" data-animate style="transition-delay:.2s;">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div>
+        <h3>Honest simulation</h3>
+        <p>This prototype uses realistic sample transport data unless a live transit API is connected.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Demo data is always clearly labelled</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Buddy never claims sample data is live</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROTOTYPE NOTICE ============ -->
+<section class="section" style="padding-top:0;padding-bottom:90px;">
+  <div class="wrap">
+    <div class="proto-banner" data-animate>
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 18a2 2 0 001.7 3h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></div>
+      <div>
+        <h3>This is a prototype, built to be tested</h3>
+        <p>Stops, routes, arrival times and delays shown here are realistic sample data created for this entrepreneurship project. A production version would connect to an official live transit data source instead of simulating arrivals — this build focuses on proving the experience: finding a stop, planning a route, and getting a clear next step, fast.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__top">
+      <div>
+        <div class="footer__brand">
+          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="url(#logoGrad)"/><path d="M11 24.5V15a3 3 0 013-3h12a3 3 0 013 3v9.5" stroke="#04101f" stroke-width="2" stroke-linecap="round"/><rect x="12" y="16" width="16" height="6.5" rx="1.5" fill="#04101f"/><circle cx="15" cy="27" r="2.1" fill="#04101f"/><circle cx="25" cy="27" r="2.1" fill="#04101f"/></svg>
+          BusBuddy
+        </div>
+        <p class="tag">Your bus. Your stop. Your time. A smart bus-stop assistant prototype built for a Level 3 entrepreneurship project.</p>
+      </div>
+      <div>
+        <h5>Product</h5>
+        <ul>
+          <li><a href="#planner">Find a bus</a></li>
+          <li><a href="#nearest">Nearest stop</a></li>
+          <li><a href="#arrivals">Arrivals</a></li>
+          <li><a href="#map">Map</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="#why">Why BusBuddy</a></li>
+          <li><a href="#safety">Safety &amp; privacy</a></li>
+          <li><a href="#how">How it works</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Assistant</h5>
+        <ul>
+          <li><a href="#chat" id="footerChatLink">Chat with Buddy</a></li>
+          <li><a href="#routes">Bus routes</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>Smart bus-stop discovery concept · Level 3 Entrepreneurship Project</span>
+      <span>Prototype interface · Sample routes &amp; arrivals · Not a live transit service</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ MOBILE BOTTOM NAV ============ -->
+<nav class="bottom-nav" aria-label="Primary">
+  <button data-scroll="#top" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>Home</button>
+  <button data-scroll="#planner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Plan</button>
+  <button data-scroll="#nearest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7.4 7-12.5A7 7 0 105 9.5C5 14.6 12 22 12 22z"/></svg>Stops</button>
+  <button data-scroll="#arrivals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Arrivals</button>
+  <button id="bottomNavChat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Chat</button>
+</nav>
+
+<!-- ============ FLOATING CHATBOT ============ -->
+<button class="chat-fab" id="chatFab" aria-haspopup="dialog" aria-expanded="false" aria-controls="chatWidget" aria-label="Open Buddy, your bus assistant">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  <span class="badge"></span>
+</button>
+
+<div class="chat-widget" id="chatWidget" role="dialog" aria-label="Chat with Buddy" aria-hidden="true">
+  <div class="chat-header">
+    <div class="chat-avatar">🚍<span class="dot"></span></div>
+    <div><h4>Buddy</h4><div class="sub">● Online · Your bus assistant</div></div>
+    <button class="chat-close" id="chatCloseBtn" aria-label="Close chat">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="chat-body" id="chatBodyWidget"></div>
+  <div class="chat-suggest" id="chatSuggestWidget">
+    <button class="chip chip-prompt" data-prompt="Nearest bus stop">Nearest bus stop</button>
+    <button class="chip chip-prompt" data-prompt="Next bus">Next bus</button>
+    <button class="chip chip-prompt" data-prompt="Bus to school">Bus to school</button>
+    <button class="chip chip-prompt" data-prompt="Plan my journey">Plan my journey</button>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInputWidget" placeholder="Ask Buddy anything…" aria-label="Message Buddy">
+    <button class="chat-send" id="chatSendWidget" aria-label="Send message">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ============ MODAL (directions / stop detail) ============ -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card" style="position:relative;">
+    <button class="icon-btn close-x" id="modalCloseBtn" aria-label="Close">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <h3 id="modalTitle">Walking directions</h3>
+    <p id="modalSub" style="font-size:13px;margin-bottom:6px;"></p>
+    <div id="modalBody" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================= DATA ============================= */
+const ROUTES = [
+  {num:24, name:'Downtown Express', dest:'City Centre',    color:'blue',   freq:'Every 8 min',  accessible:true,  covered:true,  stops:['Green Street','Riverside Avenue','Market Square','City Centre']},
+  {num:18, name:'Central Line',     dest:'Central Station', color:'cyan',   freq:'Every 10 min', accessible:true,  covered:false, stops:['Green Street','Central Market','Union Row','Central Station']},
+  {num:31, name:'School Link',      dest:'School District', color:'purple', freq:'Every 12 min', accessible:true,  covered:true,  stops:['Central Market','North Corner','Elm Avenue','School District']},
+  {num:7,  name:'Riverside Runner', dest:'Shopping Centre', color:'pink',   freq:'Every 15 min', accessible:false, covered:false, stops:['Riverside Avenue','Opera Street','Harbour View','Shopping Centre']},
+  {num:12, name:'Library Connector',dest:'Library',         color:'mint',   freq:'Every 9 min',  accessible:true,  covered:true,  stops:['Opera Street','North Corner','Fountain Plaza','Library']},
+];
+const routeByNum = n => ROUTES.find(r => r.num === Number(n));
+
+const STOPS = [
+  {id:'green-street',   name:'Green Street Stop',    baseDist:120, walk:2,  x:150, y:330, routes:[24,18], accessible:true,  covered:true},
+  {id:'central-market',  name:'Central Market Stop',  baseDist:350, walk:5,  x:300, y:250, routes:[18,31], accessible:true,  covered:false},
+  {id:'opera-street',    name:'Opera Street Stop',    baseDist:480, walk:7,  x:470, y:310, routes:[7,12],  accessible:false, covered:true},
+  {id:'north-corner',    name:'North Corner Stop',    baseDist:610, walk:9,  x:400, y:130, routes:[31,12], accessible:true,  covered:true},
+  {id:'riverside-ave',   name:'Riverside Avenue Stop',baseDist:740, walk:11, x:610, y:220, routes:[7,24],  accessible:true,  covered:false},
+];
+const stopById = id => STOPS.find(s => s.id === id);
+
+// destination -> best journey mapping
+const DESTINATIONS = [
+  {name:'School',          keys:['school'],                          routeNum:31, stopId:'north-corner',   arrive:9,  duration:16, numStops:6,  transfer:null},
+  {name:'City Centre',     keys:['city centre','city center','centre','downtown'], routeNum:24, stopId:'green-street', arrive:4,  duration:18, numStops:8,  transfer:null},
+  {name:'Library',         keys:['library'],                         routeNum:12, stopId:'opera-street',   arrive:11, duration:14, numStops:5,  transfer:null},
+  {name:'Shopping Centre', keys:['shopping centre','shopping center','mall','shops'], routeNum:7, stopId:'riverside-ave', arrive:14, duration:22, numStops:9, transfer:null},
+  {name:'Hospital',        keys:['hospital'],                        routeNum:18, stopId:'central-market', arrive:8,  duration:20, numStops:7,  transfer:'Transfer at Central Station to Route 31'},
+  {name:'Sports Centre',   keys:['sports centre','sports center','sport centre','stadium'], routeNum:24, stopId:'green-street', arrive:4, duration:26, numStops:11, transfer:'Transfer at City Centre to Route 7'},
+];
+
+const ARRIVALS_SEED = [
+  {num:24, minutesFromNow:4,  delayed:false},
+  {num:18, minutesFromNow:9,  delayed:false},
+  {num:31, minutesFromNow:14, delayed:true},
+  {num:7,  minutesFromNow:22, delayed:false},
+  {num:12, minutesFromNow:6,  delayed:false},
+];
+
+const colorClass = c => 'rb-' + c;
+
+/* ============================= STATE ============================= */
+const LS_KEY = 'busbuddy_v1';
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {savedStops:[], recentDestinations:[], hasLocation:false};
+}
+let state = loadState();
+function persist(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+let nearestStopId = 'green-street';
+let currentDestination = null; // {name, routeNum, stopId, arrive, duration, numStops, transfer}
+let sortedStops = STOPS.slice();
+
+/* ============================= UTIL ============================= */
+function $(sel, ctx){ return (ctx||document).querySelector(sel); }
+function $all(sel, ctx){ return Array.from((ctx||document).querySelectorAll(sel)); }
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function showToast(msg, iconOk){
+  const stack = $('#toastStack');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = (iconOk!==false ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6L9 17l-5-5"/></svg>' : '') + '<span>'+escapeHtml(msg)+'</span>';
+  stack.appendChild(t);
+  setTimeout(()=>{ t.classList.add('leaving'); setTimeout(()=>t.remove(), 320); }, 3200);
+}
+
+/* ============================= NEAREST / STOP LIST RENDER ============================= */
+function renderStopList(){
+  const list = $('#stopList');
+  list.innerHTML = '';
+  sortedStops.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'stop-item glass' + (s.id === nearestStopId ? ' selected' : '');
+    el.tabIndex = 0;
+    el.setAttribute('role','button');
+    el.setAttribute('aria-label', 'View ' + s.name + ', ' + s.baseDist + ' metres away');
+    const routeChips = s.routes.map(n => {
+      const r = routeByNum(n);
+      return '<span class="tag">'+r.num+'</span>';
+    }).join(' ');
+    el.innerHTML =
+      '<div class="stop-item__rank">'+(i+1)+'</div>'+
+      '<div class="stop-item__body"><h4>'+escapeHtml(s.name)+'</h4>'+
+      '<div class="sub">'+routeChips+(s.accessible?' <span class="tag">♿ Accessible</span>':'')+(s.covered?' <span class="tag">☂ Covered</span>':'')+'</div></div>'+
+      '<div class="stop-item__dist">'+s.baseDist+' m<small>'+s.walk+' min walk</small></div>';
+    el.addEventListener('click', () => selectStop(s.id, true));
+    el.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); selectStop(s.id, true);} });
+    list.appendChild(el);
+  });
+  $('#stopCount').textContent = sortedStops.length + ' stops';
+}
+
+function selectStop(id, userInitiated){
+  nearestStopId = id;
+  renderNearestCard();
+  renderStopList();
+  renderMap();
+  if(userInitiated){
+    document.getElementById('nearest').scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
+function nextBusForStop(stop){
+  // pick the soonest arrival among the routes serving this stop
+  let best = null;
+  stop.routes.forEach(n => {
+    const seed = ARRIVALS_SEED.find(a => a.num === n);
+    if(seed && (!best || seed.minutesFromNow < best.minutesFromNow)) best = seed;
+  });
+  return best || ARRIVALS_SEED[0];
+}
+
+function renderNearestCard(){
+  const stop = stopById(nearestStopId);
+  const nb = nextBusForStop(stop);
+  const route = routeByNum(nb.num);
+  $('#nearestName').textContent = stop.name;
+  $('#nearestDist').textContent = stop.baseDist + ' m';
+  $('#nearestWalk').textContent = stop.walk + ' min';
+  const badge = $('#nearestBusBadge');
+  badge.textContent = route.num;
+  badge.className = 'route-badge ' + colorClass(route.color);
+  $('#nearestBusNum').textContent = 'Route ' + route.num + ' · ' + route.name;
+  $('#nearestBusTo').textContent = '→ ' + route.dest;
+  $('#nearestBusTime').innerHTML = nb.minutesFromNow + '<span style="font-size:12px;">min</span>';
+  updateSaveButtonState();
+}
+
+/* ============================= SAVED STOPS ============================= */
+function updateSaveButtonState(){
+  const saved = state.savedStops.includes(nearestStopId);
+  const btn2 = $('#saveStopBtn2');
+  btn2.textContent = saved ? 'Saved ✓' : 'Save Stop';
+  btn2.classList.toggle('btn--secondary', saved);
+  btn2.classList.toggle('btn--primary', !saved);
+}
+function toggleSaveStop(id){
+  const idx = state.savedStops.indexOf(id);
+  const stop = stopById(id);
+  if(idx === -1){
+    state.savedStops.push(id);
+    showToast(stop.name + ' saved to your stops');
+  }else{
+    state.savedStops.splice(idx,1);
+    showToast(stop.name + ' removed from saved stops');
+  }
+  persist();
+  updateSaveButtonState();
+  renderSavedChips();
+}
+function renderSavedChips(){
+  const row = $('#savedChipRow');
+  if(state.savedStops.length === 0){
+    row.innerHTML = '<span style="font-size:13px;color:var(--text-faint);">No saved stops yet — tap "Save Stop" on any stop to pin it here.</span>';
+    return;
+  }
+  row.innerHTML = '';
+  state.savedStops.forEach(id => {
+    const s = stopById(id);
+    if(!s) return;
+    const chip = document.createElement('div');
+    chip.className = 'saved-chip';
+    chip.innerHTML = '<span>'+escapeHtml(s.name)+'</span><button aria-label="Remove '+escapeHtml(s.name)+' from saved stops">&times;</button>';
+    chip.querySelector('span').addEventListener('click', () => selectStop(id, true));
+    chip.querySelector('button').addEventListener('click', (e) => { e.stopPropagation(); toggleSaveStop(id); });
+    row.appendChild(chip);
+  });
+}
+
+/* ============================= ARRIVAL BOARD (live countdown) ============================= */
+let arrivalTargets = []; // {num, target(ms), delayed}
+function seedArrivals(){
+  const now = Date.now();
+  arrivalTargets = ARRIVALS_SEED.map(a => ({num:a.num, target: now + a.minutesFromNow*60000, delayed:a.delayed}));
+}
+function renderArrivalBoard(){
+  const list = $('#arrivalList');
+  list.innerHTML = '';
+  arrivalTargets.sort((a,b)=>a.target-b.target).forEach(a => {
+    const route = routeByNum(a.num);
+    const row = document.createElement('div');
+    row.className = 'arrival-row';
+    row.dataset.num = a.num;
+    row.innerHTML =
+      '<span class="rt-badge '+colorClass(route.color)+'">'+route.num+'</span>'+
+      '<div><div class="rt-name">'+route.name+'</div><div class="rt-dest">'+route.dest.split(' → ').pop()+' via Route '+route.num+'</div></div>'+
+      '<div class="countdown-wrap"><span class="countdown" data-num="'+a.num+'"></span></div>'+
+      '<span class="status-badge" data-status-num="'+a.num+'"></span>';
+    list.appendChild(row);
+  });
+  updateArrivalCountdowns();
+}
+function updateArrivalCountdowns(){
+  const now = Date.now();
+  arrivalTargets.forEach(a => {
+    let diffSec = Math.round((a.target - now)/1000);
+    if(diffSec <= 0){
+      // loop: reschedule a fresh arrival
+      const mins = 5 + Math.floor(Math.random()*20);
+      a.target = now + mins*60000;
+      a.delayed = Math.random() < 0.18;
+      diffSec = mins*60;
+    }
+    const mins = Math.max(0, Math.ceil(diffSec/60));
+    const el = document.querySelector('.countdown[data-num="'+a.num+'"]');
+    const statusEl = document.querySelector('[data-status-num="'+a.num+'"]');
+    if(!el || !statusEl) continue_marker(a);
+    if(el){
+      el.textContent = mins <= 0 ? 'Now' : mins + ' min';
+      el.classList.toggle('pulse', mins <= 2 && !a.delayed);
+    }
+    if(statusEl){
+      let cls, label;
+      if(a.delayed){ cls='status-delayed'; label = '2 min late'; }
+      else if(mins <= 2){ cls='status-arriving'; label='Arriving'; }
+      else { cls='status-ontime'; label='On time'; }
+      statusEl.className = 'status-badge ' + cls;
+      statusEl.textContent = label;
+    }
+  });
+  function continue_marker(){} // no-op guard for older engines
+}
+setInterval(updateArrivalCountdowns, 1000);
+
+/* ============================= ROUTES GRID ============================= */
+function renderRoutesGrid(){
+  const grid = $('#routesGrid');
+  grid.innerHTML = '';
+  ROUTES.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'glass route-card';
+    card.innerHTML =
+      '<div class="route-card__head">'+
+        '<span class="route-badge '+colorClass(r.color)+'">'+r.num+'</span>'+
+        '<div><h3>'+r.name+'</h3><div class="dest">→ '+r.dest+'</div></div>'+
+      '</div>'+
+      '<div class="route-card__stops">'+r.stops.map(s=>'<span class="tag">'+s+'</span>').join('')+'</div>'+
+      '<div class="route-card__foot">'+
+        '<span class="freq">'+r.freq+'</span>'+
+        '<span class="a11y">'+
+          (r.accessible? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v1M9 12h6M10 12l1 7M14 12l-1 7"/></svg>' : '')+
+          (r.covered? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 6 0 0118 0M4 12v6M20 12v6"/></svg>' : '')+
+        '</span>'+
+      '</div>'+
+      '<div class="route-detail" data-detail>'+
+        '<div class="sched-row"><span>Frequency</span><b>'+r.freq+'</b></div>'+
+        '<div class="sched-row"><span>Accessible vehicle</span><b>'+(r.accessible?'Yes':'Not on this route')+'</b></div>'+
+        '<div class="sched-row"><span>Shelter at boarding stop</span><b>'+(r.covered?'Yes':'No')+'</b></div>'+
+        '<div class="sched-row"><span>Full stop order</span><b style="font-family:var(--font-body);font-weight:600;">'+r.stops.join(' → ')+'</b></div>'+
+      '</div>';
+    card.addEventListener('click', (e)=>{
+      const detail = card.querySelector('[data-detail]');
+      detail.classList.toggle('open');
+    });
+    card.setAttribute('tabindex','0');
+    card.setAttribute('role','button');
+    card.setAttribute('aria-expanded','false');
+    card.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); card.click();} });
+    grid.appendChild(card);
+  });
+}
+
+/* ============================= MAP (simulated SVG) ============================= */
+let userMarkerPos = null; // {x,y}
+let selectedDestForMap = null;
+
+function renderMap(){
+  const svg = $('#mapSvg');
+  const W=800,H=450;
+  let html = '';
+  // background road grid
+  html += '<defs><radialGradient id="mapGlow" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="rgba(61,127,255,.14)"/><stop offset="100%" stop-color="rgba(61,127,255,0)"/></radialGradient></defs>';
+  html += '<rect width="'+W+'" height="'+H+'" fill="url(#mapGlow)"/>';
+  const roadColorMinor = 'rgba(255,255,255,.07)', roadColorMajor='rgba(255,255,255,.14)';
+  for(let x=0;x<=W;x+=80){ html += '<line x1="'+x+'" y1="0" x2="'+x+'" y2="'+H+'" stroke="'+roadColorMinor+'" stroke-width="1"/>'; }
+  for(let y=0;y<=H;y+=75){ html += '<line x1="0" y1="'+y+'" x2="'+W+'" y2="'+y+'" stroke="'+roadColorMinor+'" stroke-width="1"/>'; }
+  html += '<line x1="0" y1="225" x2="'+W+'" y2="225" stroke="'+roadColorMajor+'" stroke-width="3"/>';
+  html += '<line x1="400" y1="0" x2="400" y2="'+H+'" stroke="'+roadColorMajor+'" stroke-width="3"/>';
+
+  // route line to selected destination stop
+  const destStop = stopById(nearestStopId);
+  const upos = userMarkerPos || {x: destStop.x - 60, y: destStop.y + 50};
+  html += '<path d="M'+upos.x+' '+upos.y+' Q '+((upos.x+destStop.x)/2)+' '+(Math.min(upos.y,destStop.y)-40)+', '+destStop.x+' '+destStop.y+'" stroke="url(#railGrad)" stroke-width="3" fill="none" stroke-dasharray="7 7" opacity="0.9"/>';
+
+  // stops
+  STOPS.forEach(s => {
+    const isSel = s.id === nearestStopId;
+    html += '<g transform="translate('+s.x+','+s.y+')" style="cursor:pointer;" data-stop="'+s.id+'">';
+    if(isSel){ html += '<circle r="16" fill="rgba(168,85,247,.18)"><animate attributeName="r" values="14;20;14" dur="2.2s" repeatCount="indefinite"/></circle>'; }
+    html += '<circle r="9" fill="'+(isSel?'#a855f7':'#3d7fff')+'" stroke="#0a0d18" stroke-width="2.5"/>';
+    html += '<text x="0" y="-16" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="'+(isSel?'#e9d5ff':'#a3acc7')+'">'+s.name.replace(' Stop','')+'</text>';
+    html += '</g>';
+  });
+
+  // user marker
+  html += '<g transform="translate('+upos.x+','+upos.y+')">';
+  html += '<circle r="15" fill="rgba(34,211,238,.22)"><animate attributeName="r" values="12;20;12" dur="1.8s" repeatCount="indefinite"/></circle>';
+  html += '<circle r="7" fill="#22d3ee" stroke="#0a0d18" stroke-width="2.5"/>';
+  html += '<text x="0" y="-20" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#67e8f9">You</text>';
+  html += '</g>';
+
+  // destination marker if a journey destination selected
+  if(currentDestination){
+    const dStop = stopById(currentDestination.stopId);
+    html += '<g transform="translate('+(dStop.x+60)+','+(dStop.y-45)+')">';
+    html += '<circle r="8" fill="#34d399" stroke="#0a0d18" stroke-width="2.5"/>';
+    html += '<text x="0" y="-16" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#6ee7b7">'+currentDestination.name+'</text>';
+    html += '</g>';
+  }
+
+  svg.innerHTML = html;
+  $all('[data-stop]', svg).forEach(g => {
+    g.addEventListener('click', () => selectStop(g.getAttribute('data-stop'), false));
+  });
+}
+
+$('#mapSearchBtn').addEventListener('click', () => {
+  const val = $('#mapSearchInput').value.trim();
+  if(!val){ showToast('Type a place to search on the map', false); return; }
+  // move user marker to a pseudo-random but deterministic position based on text
+  let hash = 0; for(let i=0;i<val.length;i++) hash = (hash*31 + val.charCodeAt(i)) % 10000;
+  userMarkerPos = { x: 90 + (hash % 620), y: 70 + ((hash*7) % 300) };
+  renderMap();
+  showToast('Showing results near "'+val+'" (simulated)');
+});
+$('#mapResetBtn').addEventListener('click', () => {
+  userMarkerPos = null;
+  $('#mapSearchInput').value='';
+  renderMap();
+  showToast('Map reset', true);
+});
+
+/* ============================= GEOLOCATION ============================= */
+function seededJitter(seedStr, range){
+  let h=0; for(let i=0;i<seedStr.length;i++) h = (h*31 + seedStr.charCodeAt(i)) >>> 0;
+  return (h % (range*2)) - range;
+}
+function useMyLocation(){
+  const banner = $('#locationBanner');
+  banner.style.display='flex';
+  banner.className='location-banner';
+  banner.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" stroke-dasharray="4 3"/></svg><span>Locating you…</span>';
+
+  if(!('geolocation' in navigator)){
+    handleLocationError();
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => handleLocationSuccess(pos),
+    err => handleLocationError(),
+    {enableHighAccuracy:false, timeout:8000, maximumAge:60000}
+  );
+}
+function handleLocationSuccess(pos){
+  const lat = pos.coords.latitude.toFixed(3), lng = pos.coords.longitude.toFixed(3);
+  const seed = lat+','+lng;
+  sortedStops = STOPS.map(s => ({...s, baseDist: Math.max(40, s.baseDist + seededJitter(seed+s.id, 90))}))
+                     .sort((a,b)=>a.baseDist-b.baseDist);
+  nearestStopId = sortedStops[0].id;
+  state.hasLocation = true;
+  persist();
+
+  const banner = $('#locationBanner');
+  banner.className='location-banner';
+  banner.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg><span>Location found — approx '+lat+', '+lng+'. Nearby stops sorted by distance. <strong>This uses sample transport data, not a live feed.</strong></span>';
+
+  $('#fromInput').value = 'Your current location';
+  userMarkerPos = { x: sortedStops[0].x - 55, y: sortedStops[0].y + 45 };
+
+  renderNearestCard(); renderStopList(); renderMap(); updateDashboard();
+  showToast('Location detected — stops updated');
+}
+function handleLocationError(){
+  const banner = $('#locationBanner');
+  banner.className='location-banner warn';
+  banner.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 18a2 2 0 001.7 3h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg><span>No worries — location wasn\'t available. Enter your starting point manually below instead.</span>';
+  $('#fromInput').removeAttribute('readonly');
+  $('#fromInput').value='';
+  $('#fromInput').placeholder='Type your starting point…';
+  $('#fromInput').focus();
+}
+$('#useLocationBtn').addEventListener('click', useMyLocation);
+$('#navLocationBtn').addEventListener('click', () => { document.getElementById('planner').scrollIntoView({behavior:'smooth'}); useMyLocation(); });
+
+/* ============================= JOURNEY FINDER ============================= */
+function findDestination(query){
+  const q = query.trim().toLowerCase();
+  if(!q) return null;
+  return DESTINATIONS.find(d => d.keys.some(k => q.includes(k)) || q.includes(d.name.toLowerCase())) || null;
+}
+
+function runSearch(destName){
+  const toInput = $('#toInput');
+  const query = destName || toInput.value;
+  toInput.value = query;
+  const resultArea = $('#resultArea');
+  resultArea.innerHTML = '<div class="skeleton-row"></div><div class="skeleton-row" style="width:80%;"></div>';
+
+  $all('.chip', $('#chipRow')).forEach(c => c.classList.toggle('active', c.dataset.dest && query.toLowerCase().includes(c.dataset.dest.toLowerCase())));
+
+  setTimeout(() => {
+    const dest = findDestination(query);
+    if(!dest){
+      resultArea.innerHTML =
+        '<div class="empty-state">'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>'+
+        '<h4>No matching bus in this prototype</h4>'+
+        '<p>Try one of the popular destinations below, like City Centre or Library.</p>'+
+        '</div>';
+      return;
+    }
+    currentDestination = dest;
+    const route = routeByNum(dest.routeNum);
+    const stop = stopById(dest.stopId);
+    let status = 'status-ontime', statusLabel='On time';
+    const seed = ARRIVALS_SEED.find(a=>a.num===dest.routeNum);
+    if(seed && seed.delayed){ status='status-delayed'; statusLabel='2 min late'; }
+    else if(dest.arrive <= 5){ status='status-arriving'; statusLabel='Arriving'; }
+
+    resultArea.innerHTML =
+      '<div class="route-result glass">'+
+        '<span class="route-badge '+colorClass(route.color)+'">'+route.num+'</span>'+
+        '<div class="route-result__body">'+
+          '<h3>'+route.name+'</h3>'+
+          '<div class="route-result__dest">'+stop.name+' → '+dest.name+'</div>'+
+          '<div class="route-result__meta">'+
+            '<span class="meta-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4a2 2 0 11-2-2M4 21l4.5-9L13 15l3-6M17 4l4 2-4 2"/></svg>'+stop.walk+' min walk</span>'+
+            '<span class="meta-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>'+dest.duration+' min total</span>'+
+            '<span class="meta-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg>'+dest.numStops+' stops</span>'+
+            '<span class="meta-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7.4 7-12.5A7 7 0 105 9.5C5 14.6 12 22 12 22z"/></svg>'+stop.name+'</span>'+
+          '</div>'+
+          (dest.transfer ? '<div class="route-result__transfer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/></svg>'+dest.transfer+'</div>' : '')+
+        '</div>'+
+        '<div class="route-result__status">'+
+          '<span class="status-badge '+status+'">'+statusLabel+'</span>'+
+          '<div class="route-result__arrival">'+dest.arrive+' min</div>'+
+        '</div>'+
+      '</div>';
+
+    // remember recent destination
+    state.recentDestinations = [dest.name, ...state.recentDestinations.filter(d=>d!==dest.name)].slice(0,5);
+    persist();
+
+    nearestStopId = dest.stopId;
+    renderNearestCard(); renderStopList(); renderMap();
+    updateDashboard();
+  }, 650);
+}
+
+function updateDashboard(){
+  if(!currentDestination) return;
+  const dest = currentDestination;
+  const route = routeByNum(dest.routeNum);
+  const stop = stopById(dest.stopId);
+  $('#dashStop').textContent = stop.name.replace(' Stop','');
+  $('#dashBus').textContent = route.num + ' → ' + route.dest;
+  $('#dashDest').textContent = dest.name;
+  $('#dashWalk').textContent = stop.walk + ' min';
+  $('#dashArrival').textContent = dest.arrive + ' min';
+  $('#dashDuration').textContent = dest.duration + ' min';
+}
+
+$('#searchBtn').addEventListener('click', () => runSearch());
+$('#toInput').addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); runSearch(); } });
+$all('.chip[data-dest]').forEach(chip => {
+  chip.addEventListener('click', () => { $('#toInput').value = chip.dataset.dest; runSearch(chip.dataset.dest); });
+});
+$('#swapBtn').addEventListener('click', () => {
+  const from = $('#fromInput'), to = $('#toInput');
+  const tmp = from.value; from.value = to.value || 'Set my location…'; to.value = (tmp === 'Set my location…' || tmp==='Your current location') ? '' : tmp;
+  showToast('Swapped starting point and destination', true);
+});
+$('#heroFindBtn').addEventListener('click', () => { document.getElementById('planner').scrollIntoView({behavior:'smooth'}); $('#toInput').focus(); });
+$('#navFindBtn').addEventListener('click', () => { document.getElementById('planner').scrollIntoView({behavior:'smooth'}); $('#toInput').focus(); });
+$('#heroExploreBtn').addEventListener('click', () => document.getElementById('nearest').scrollIntoView({behavior:'smooth'}));
+
+/* ============================= DIRECTIONS / VIEW STOP MODAL ============================= */
+function openModal(title, sub, bodyHtml){
+  $('#modalTitle').textContent = title;
+  $('#modalSub').textContent = sub || '';
+  $('#modalBody').innerHTML = bodyHtml;
+  $('#modalOverlay').classList.add('open');
+  $('#modalCloseBtn').focus();
+}
+function closeModal(){ $('#modalOverlay').classList.remove('open'); }
+$('#modalCloseBtn').addEventListener('click', closeModal);
+$('#modalOverlay').addEventListener('click', e => { if(e.target.id==='modalOverlay') closeModal(); });
+document.addEventListener('keydown', e => { if(e.key==='Escape'){ closeModal(); closeChat(); } });
+
+function showDirections(){
+  const stop = stopById(nearestStopId);
+  const steps = [
+    {t:'Head toward '+stop.name, d:'Leave your current position and walk toward the main road.', dur:'~'+Math.max(1,Math.round(stop.walk*0.4))+' min'},
+    {t:'Continue straight for '+Math.round(stop.baseDist*0.6)+'m', d:'Keep to the pavement, crossing at any marked crossing points.', dur:'~'+Math.max(1,Math.round(stop.walk*0.5))+' min'},
+    {t:'Arrive at '+stop.name, d:'Look for the '+stop.routes.map(n=>'Route '+n).join(' / ')+' signage'+(stop.covered?' — this stop has shelter':'')+'.', dur:'~1 min'},
+  ];
+  const html = steps.map((s,i)=>'<div class="direction-step"><div class="n">'+(i+1)+'</div><div><p>'+s.t+'</p><div style="font-size:12.5px;color:var(--text-dim);margin-top:2px;">'+s.d+'</div><div class="dur">'+s.dur+'</div></div></div>').join('');
+  openModal('Walking directions', 'Simulated directions to '+stop.name+' · '+stop.baseDist+'m total', html);
+}
+function viewStopDetail(){
+  const stop = stopById(nearestStopId);
+  const nb = nextBusForStop(stop);
+  const route = routeByNum(nb.num);
+  const html =
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">'+
+      (stop.accessible? '<span class="tag">♿ Accessible</span>':'')+
+      (stop.covered? '<span class="tag">☂ Covered</span>':'')+
+      '<span class="tag">'+stop.baseDist+'m away</span>'+
+    '</div>'+
+    '<div style="font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;font-weight:700;margin-bottom:10px;">Routes serving this stop</div>'+
+    stop.routes.map(n=>{
+      const r = routeByNum(n);
+      return '<div class="direction-step"><div class="n" style="background:none;">'+ '<span class="route-badge '+colorClass(r.color)+'" style="width:30px;height:30px;font-size:12px;border-radius:8px;">'+r.num+'</span></div><div><p>'+r.name+'</p><div style="font-size:12.5px;color:var(--text-dim);">→ '+r.dest+' · '+r.freq+'</div></div></div>';
+    }).join('');
+  openModal(stop.name, 'Stop details · prototype data', html);
+  document.getElementById('map').scrollIntoView({behavior:'smooth'});
+  setTimeout(()=>{ closeModal(); }, 10);
+  // re-open modal after scroll settles for smoother feel
+  setTimeout(()=>openModal(stop.name, 'Stop details · prototype data', html), 420);
+}
+
+$('#directionsBtn').addEventListener('click', showDirections);
+$('#viewStopBtn').addEventListener('click', viewStopDetail);
+$('#saveStopBtn').addEventListener('click', () => toggleSaveStop(nearestStopId));
+$('#saveStopBtn2').addEventListener('click', () => toggleSaveStop(nearestStopId));
+
+/* ============================= CHATBOT NLU ============================= */
+const chatCtx = { awaitingDestination:false };
+
+function botName(){ return 'Buddy'; }
+
+function findBusNumberMention(text){
+  const m = text.match(/\bbus\s*#?\s*(\d{1,2})\b/i) || text.match(/\broute\s*#?\s*(\d{1,2})\b/i);
+  if(m) return Number(m[1]);
+  const bare = text.match(/\b(24|18|31|12|7)\b/);
+  return bare ? Number(bare[1]) : null;
+}
+
+function processMessage(raw){
+  const text = raw.trim();
+  const q = text.toLowerCase();
+
+  if(chatCtx.awaitingDestination){
+    chatCtx.awaitingDestination = false;
+    const dest = findDestination(q);
+    if(dest){
+      runSearch(dest.name);
+      return replyPlan(dest);
+    }
+    return {text:"I couldn't match that to a destination in this prototype. Try School, City Centre, Library, Shopping Centre, Hospital or Sports Centre.", quick:['School','City Centre','Library']};
+  }
+
+  // greetings
+  if(/^(hi|hello|hey|yo|sup)\b/.test(q)){
+    return {text:"Hey there 👋 I'm Buddy. Ask me about your nearest stop, the next bus, or where you're headed.", quick:['Nearest bus stop','Next bus','Plan my journey']};
+  }
+  if(/thank/.test(q)){
+    return {text:"Anytime! Safe travels 🚍"};
+  }
+
+  // bus number lookup — "where does bus 24 go?"
+  const busNum = findBusNumberMention(q);
+  if(busNum && /(where does|go(es)?|route|about|tell me about)/.test(q)){
+    const r = routeByNum(busNum);
+    if(r) return {text:'🚌 Bus '+r.num+' ('+r.name+') runs to <b>'+r.dest+'</b>, stopping at '+r.stops.join(' → ')+'. It runs '+r.freq.toLowerCase()+'.'};
+    return {text:"I don't have Bus "+busNum+" in this prototype network. Try 7, 12, 18, 24 or 31."};
+  }
+
+  // delay status
+  if(/(delay|late|on time\??|running late)/.test(q)){
+    const num = busNum || (currentDestination ? currentDestination.routeNum : nextBusForStop(stopById(nearestStopId)).num);
+    const seed = ARRIVALS_SEED.find(a=>a.num===num);
+    const r = routeByNum(num);
+    if(seed && seed.delayed) return {text:'⚠️ Bus '+r.num+' ('+r.name+') is showing as about 2 minutes late in this demo board. I\'d suggest checking the arrival board before you leave.', quick:['Nearest bus stop']};
+    return {text:'✅ Bus '+r.num+' ('+r.name+') is showing "On time" on the demo arrival board right now.'};
+  }
+
+  // fastest bus
+  if(/(fastest|quickest|shortest|which bus.*first|soonest)/.test(q)){
+    const soonest = arrivalTargets.slice().sort((a,b)=>a.target-b.target)[0];
+    const r = routeByNum(soonest.num);
+    const mins = Math.max(0, Math.round((soonest.target-Date.now())/60000));
+    return {text:'⚡ Right now, <b>Bus '+r.num+'</b> ('+r.name+' → '+r.dest+') is arriving first, in about '+mins+' min.'};
+  }
+
+  // transfer / change buses
+  if(/(change bus|transfer|switch bus)/.test(q)){
+    if(currentDestination){
+      return currentDestination.transfer
+        ? {text:'🔁 Yes — for '+currentDestination.name+', you\'ll need to transfer: '+currentDestination.transfer+'.'}
+        : {text:'🙂 No transfer needed — Bus '+currentDestination.routeNum+' goes straight to '+currentDestination.name+'.'};
+    }
+    return {text:"Tell me your destination and I'll check whether you need a transfer.", quick:['City Centre','School','Library']};
+  }
+
+  // missed the bus
+  if(/(missed|miss my bus|what.*if.*miss)/.test(q)){
+    return {text:"No stress — check the arrival board for the next departure on the same route, it's usually only a few minutes behind. Want me to show your nearest stop's next bus?", quick:['Next bus','Nearest bus stop']};
+  }
+
+  // which stop to get off / alight
+  if(/(get off|alight|which stop should i)/.test(q)){
+    if(currentDestination) return {text:'🛑 Get off at the stop closest to <b>'+currentDestination.name+'</b> — that\'s the last stop on Route '+currentDestination.routeNum+': '+routeByNum(currentDestination.routeNum).stops.slice(-1)[0]+'.'};
+    return {text:"Tell me your destination first and I'll tell you exactly which stop to get off at.", quick:['Plan my journey']};
+  }
+
+  // walk to a different stop
+  if(/(walk to another|different stop|other stop|another stop)/.test(q)){
+    const alt = sortedStops.find(s=>s.id!==nearestStopId);
+    return {text:'🚶 Sure — the next closest option is <b>'+alt.name+'</b>, about '+alt.baseDist+'m away ('+alt.walk+' min walk). It serves Route'+(alt.routes.length>1?'s':'')+' '+alt.routes.join(' & ')+'.'};
+  }
+
+  // how many stops
+  if(/(how many stops|number of stops)/.test(q)){
+    if(currentDestination) return {text:'🔢 It\'s about '+currentDestination.numStops+' stops from '+stopById(currentDestination.stopId).name+' to '+currentDestination.name+'.'};
+    return {text:"Tell me your destination and I'll count the stops for you.", quick:['Plan my journey']};
+  }
+
+  // nearby buses / stops
+  if(/(near me|nearby|around me|is there a bus)/.test(q)){
+    const near = sortedStops.slice(0,2).map(s=>s.name+' ('+s.baseDist+'m, routes '+s.routes.join(' & ')+')').join(' and ');
+    return {text:'📍 Yes! Nearby you\'ve got '+near+'. Want directions to the closer one?', quick:['Directions','Nearest bus stop']};
+  }
+
+  // distance to nearest / closest stop / where is nearest
+  if(/(nearest|closest).*(stop)|how far.*(stop)|(stop).*(nearest|closest)/.test(q)){
+    const s = stopById(nearestStopId);
+    return {text:'🚍 Your nearest stop is <b>'+s.name+'</b>, about '+s.baseDist+'m away ('+s.walk+' min walk). Want walking directions?', quick:['Yes please','No thanks']};
+  }
+
+  // yes please -> directions follow-up
+  if(/^yes( please)?$/.test(q)){
+    showDirections();
+    return {text:"Here you go — I've opened walking directions for you. 🧭"};
+  }
+  if(/^no( thanks)?$/.test(q)){
+    return {text:"No problem! Ask me anything else, anytime."};
+  }
+
+  // "what bus goes to X" / "show me buses going to X" / "bus to school"
+  if(/(what bus|which bus|bus (goes|going)? ?to|buses (going|heading) to|show me bus)/.test(q)){
+    const dest = findDestination(q);
+    if(dest){
+      runSearch(dest.name);
+      const r = routeByNum(dest.routeNum);
+      return {text:'🚌 Take <b>Bus '+r.num+'</b> ('+r.name+') from '+stopById(dest.stopId).name+' — arriving in about '+dest.arrive+' min, '+dest.duration+' min total to '+dest.name+'.'+(dest.transfer?' '+dest.transfer+'.':'')};
+    }
+    chatCtx.awaitingDestination = true;
+    return {text:"Where are you headed? I can match you with the right bus.", quick:['School','City Centre','Library']};
+  }
+
+  // "how do I get to X" -> directions/journey
+  if(/(how do i get to|get me to|directions to|how to reach)/.test(q)){
+    const dest = findDestination(q);
+    if(dest){
+      runSearch(dest.name);
+      return replyPlan(dest);
+    }
+    chatCtx.awaitingDestination = true;
+    return {text:"Where would you like to go? I'll plan the journey.", quick:['School','City Centre','Hospital']};
+  }
+
+  // next bus (general) / what time does bus arrive
+  if(/(next bus|when is the (next )?bus|what time does the bus)/.test(q)){
+    const s = stopById(nearestStopId);
+    const nb = nextBusForStop(s);
+    const r = routeByNum(nb.num);
+    return {text:'⏱️ The next bus from <b>'+s.name+'</b> is <b>Bus '+r.num+'</b> → '+r.dest+', arriving in about '+nb.minutesFromNow+' min.'};
+  }
+  if(/next bus from this stop/.test(q)){
+    const s = stopById(nearestStopId);
+    const nb = nextBusForStop(s);
+    const r = routeByNum(nb.num);
+    return {text:'From '+s.name+', that\'s <b>Bus '+r.num+'</b> → '+r.dest+' in about '+nb.minutesFromNow+' min.'};
+  }
+
+  // plan my journey
+  if(/(plan (my )?journey|help me plan|plan a trip)/.test(q)){
+    chatCtx.awaitingDestination = true;
+    return {text:"Happy to help! Where are you headed today?", quick:['School','City Centre','Library','Shopping Centre']};
+  }
+
+  // "what bus should I take" (generic)
+  if(/(what bus should i take|which bus should i take)/.test(q)){
+    if(currentDestination) return replyPlan(currentDestination);
+    chatCtx.awaitingDestination = true;
+    return {text:"That depends on where you're going — what's your destination?", quick:['School','City Centre','Library']};
+  }
+
+  // fallback: try destination anywhere in the message
+  const anyDest = findDestination(q);
+  if(anyDest){
+    runSearch(anyDest.name);
+    return replyPlan(anyDest);
+  }
+
+  return {text:"I'm not 100% sure I understood that — I can help with your nearest stop, the next bus, delays, transfers, or planning a journey. Try one of these:", quick:['Nearest bus stop','Next bus','Plan my journey']};
+}
+
+function replyPlan(dest){
+  const r = routeByNum(dest.routeNum);
+  const stop = stopById(dest.stopId);
+  return {text:'🚍 For <b>'+dest.name+'</b>, take <b>Bus '+r.num+'</b> ('+r.name+') from '+stop.name+' ('+stop.walk+' min walk). Arrives in about '+dest.arrive+' min, '+dest.duration+' min total.'+(dest.transfer?' '+dest.transfer+'.':'')+' Want walking directions to the stop?', quick:['Yes please','No thanks']};
+}
+
+/* ============================= CHAT UI (dual surfaces: inline + widget) ============================= */
+function createMsgEl(text, who){
+  const el = document.createElement('div');
+  el.className = 'msg ' + who;
+  el.innerHTML = text;
+  return el;
+}
+function createQuickReplies(bodyEl, options, sendFn){
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-quick';
+  options.forEach(opt => {
+    const b = document.createElement('button');
+    b.className = 'chip btn--sm';
+    b.style.padding = '8px 14px';
+    b.textContent = opt;
+    b.addEventListener('click', () => sendFn(opt));
+    wrap.appendChild(b);
+  });
+  bodyEl.appendChild(wrap);
+}
+
+const chatBodies = [];
+function registerChatSurface(bodyId, inputId, sendId){
+  const body = document.getElementById(bodyId);
+  const input = document.getElementById(inputId);
+  const send = document.getElementById(sendId);
+  chatBodies.push(body);
+
+  function send_message(text){
+    if(!text || !text.trim()) return;
+    body.appendChild(createMsgEl(escapeHtml(text), 'user'));
+    body.scrollTop = body.scrollHeight;
+    input.value = '';
+    const typingEl = document.createElement('div');
+    typingEl.className = 'typing';
+    typingEl.innerHTML = '<span></span><span></span><span></span>';
+    body.appendChild(typingEl);
+    body.scrollTop = body.scrollHeight;
+    setTimeout(() => {
+      typingEl.remove();
+      const res = processMessage(text);
+      const msgEl = createMsgEl(res.text, 'bot');
+      body.appendChild(msgEl);
+      if(res.quick && res.quick.length){
+        createQuickReplies(body, res.quick, send_message);
+      }
+      body.scrollTop = body.scrollHeight;
+    }, 550 + Math.random()*400);
+  }
+
+  send.addEventListener('click', () => send_message(input.value));
+  input.addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); send_message(input.value); } });
+
+  return send_message;
+}
+
+const sendInline = registerChatSurface('chatBodyInline','chatInputInline','chatSendInline');
+const sendWidget = registerChatSurface('chatBodyWidget','chatInputWidget','chatSendWidget');
+
+// seed initial greeting in both surfaces
+[ ['chatBodyInline'], ['chatBodyWidget'] ].forEach(([id]) => {
+  const body = document.getElementById(id);
+  body.appendChild(createMsgEl("Hi! I'm Buddy 👋 Ask me things like <b>“What is my nearest stop?”</b> or <b>“Bus to school”</b> — I'll do my best to help.", 'bot'));
+});
+
+$all('.chip-prompt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const prompt = btn.dataset.prompt;
+    // route to whichever surface is most relevant: widget if open, else inline
+    if($('#chatWidget').classList.contains('open')) sendWidget(prompt);
+    else sendInline(prompt);
+  });
+});
+
+/* Floating widget open/close */
+function openChat(){
+  $('#chatWidget').classList.add('open');
+  $('#chatWidget').setAttribute('aria-hidden','false');
+  $('#chatFab').setAttribute('aria-expanded','true');
+  setTimeout(()=>$('#chatInputWidget').focus(), 200);
+}
+function closeChat(){
+  $('#chatWidget').classList.remove('open');
+  $('#chatWidget').setAttribute('aria-hidden','true');
+  $('#chatFab').setAttribute('aria-expanded','false');
+}
+$('#chatFab').addEventListener('click', () => {
+  $('#chatWidget').classList.contains('open') ? closeChat() : openChat();
+});
+$('#chatCloseBtn').addEventListener('click', closeChat);
+$('#navChatLink').addEventListener('click', (e)=>{ e.preventDefault(); document.getElementById('chat').scrollIntoView({behavior:'smooth'}); });
+$('#footerChatLink').addEventListener('click', (e)=>{ e.preventDefault(); openChat(); });
+$('#bottomNavChat').addEventListener('click', openChat);
+
+/* ============================= NAV / SCROLL EFFECTS ============================= */
+window.addEventListener('scroll', () => {
+  $('#siteNav').classList.toggle('scrolled', window.scrollY > 30);
+  updateRail();
+  updateBottomNavActive();
+}, {passive:true});
+
+$all('.bottom-nav button[data-scroll]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelector(btn.dataset.scroll).scrollIntoView({behavior:'smooth'});
+  });
+});
+function updateBottomNavActive(){
+  const sections = ['#top','#planner','#nearest','#arrivals'];
+  let current = sections[0];
+  sections.forEach(id => {
+    const el = document.querySelector(id);
+    if(el && el.getBoundingClientRect().top < 140) current = id;
+  });
+  $all('.bottom-nav button[data-scroll]').forEach(b => b.classList.toggle('active', b.dataset.scroll === current));
+}
+
+/* route rail progress */
+const railPath = document.getElementById('railTrack');
+let railLen = 800;
+function updateRail(){
+  const doc = document.documentElement;
+  const scrolled = doc.scrollTop;
+  const max = doc.scrollHeight - doc.clientHeight;
+  const pct = max > 0 ? Math.min(1, scrolled/max) : 0;
+  const fill = document.getElementById('railFill');
+  const bus = document.getElementById('railBus');
+  if(fill){
+    fill.style.strokeDashoffset = String(railLen - railLen*pct);
+  }
+  if(bus){
+    bus.setAttribute('cy', String(pct*800));
+  }
+}
+
+/* scroll-triggered animation */
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){ entry.target.classList.add('in-view'); io.unobserve(entry.target); }
+  });
+}, {threshold:0.12});
+$all('[data-animate]').forEach(el => io.observe(el));
+
+/* ============================= INIT ============================= */
+function init(){
+  seedArrivals();
+  renderArrivalBoard();
+  renderRoutesGrid();
+  renderNearestCard();
+  renderStopList();
+  renderMap();
+  renderSavedChips();
+  updateBottomNavActive();
+  railLen = document.getElementById('railFill').getTotalLength ? document.getElementById('railFill').getTotalLength() : 800;
+  updateRail();
+}
+init();
+
+})();
+</script>
+</body>
+</html>
