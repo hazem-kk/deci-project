@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="./favicon.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#10131f">
+<title>BUSLY — Your Smarter Bus Journey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3Qf3iJ5Vv5YQn7qf9w5c7e0s7c6wE=" crossorigin="">
+</head>
+<body>
+<div class="topbar"><span>BUSLY</span><span>SMART TRANSPORT PROTOTYPE</span><span id="liveClock">--:--</span></div>
+<header class="header">
+  <a class="brand" href="#top">BUS<span>LY</span><small>SMART MOBILITY</small></a>
+  <nav>
+    <a href="#planner">Plan</a><a href="#nearby">Stops</a><a href="#arrivals">Arrivals</a>
+    <a href="#assistant">Assistant</a><a href="#how">How it works</a>
+  </nav>
+  
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="hero-left">
+    <div class="eyebrow"><i></i> LIVE JOURNEY PLANNER</div>
+    <h1>Your bus.<br><em>Your time.</em><br>Your journey.</h1>
+    <p class="hero-text">BUSLY helps people solve a simple but frustrating transport problem: <b>“Where is my nearest stop, which bus should I take, and when will it arrive?”</b></p>
+    <div class="hero-actions">
+      <a class="primary" href="#planner">Plan a journey <span>→</span></a>
+      <a class="secondary" href="#nearby">Explore the map</a>
+    </div>
+    <div class="trust-row"><span>✓ No account required</span><span>✓ Simple directions</span><span>✓ Accessibility-aware</span></div>
+  </div>
+  <div class="hero-visual">
+    <div class="map-bg"></div>
+    <div class="map-road road-a"></div><div class="map-road road-b"></div><div class="map-road road-c"></div>
+    <div class="map-route route-a"></div><div class="map-route route-b"></div>
+    <div class="map-stop stop-a"><b>24</b></div><div class="map-stop stop-b"><b>17</b></div><div class="map-stop stop-c"><b>41</b></div>
+    <div class="map-pin-demo"><span>24</span><small>EL SHOROUK ACADEMY</small></div>
+    <div class="map-float"><small>FEATURED STOP</small><b id="heroStop">El Shorouk Academy</b><span>Route 24 · City Centre direction</span></div>
+    <div class="map-live"><i></i> LIVE NETWORK</div>
+  </div>
+</section>
+
+<section class="problem-strip">
+  <div><span>THE PROBLEM</span><h2>Waiting is worse when you don't know <em>what you're waiting for.</em></h2></div>
+  <p>People at a bus stop may need information about timing, directions, queues, safety, accessibility and the correct bus. BUSLY turns that uncertainty into one clear journey.</p>
+</section>
+
+<section class="planner section" id="planner">
+  <div class="section-heading"><div><span>01 · JOURNEY PLANNER</span><h2>Tell us where<br>you want to go.</h2></div><p>Start with a destination. BUSLY then gives you a suggested stop, route, walking time and example arrival.</p></div>
+  <div class="planner-card">
+    <div class="planner-top">
+      <div class="field"><label>FROM</label><input id="fromField" value="El Shorouk Academy" placeholder="Starting point"></div>
+      <button class="swap" id="swapBtn" aria-label="Swap locations">↕</button>
+      <div class="field"><label>TO</label><input id="destination" placeholder="Any place, address or landmark..."></div>
+      <button class="plan-btn" id="planBtn">Plan journey →</button>
+    </div>
+    <div class="suggestions"><span>Try:</span><button data-dest="School">School</button><button data-dest="City Centre">City Centre</button><button data-dest="Hospital">Hospital</button><button data-dest="Library">Library</button><button data-dest="Sports Centre">Sports Centre</button><button data-dest="El Shorouk Academy">El Shorouk Academy</button></div>
+    <div class="journey-result" id="journeyResult">
+      <div class="result-label">RECOMMENDED JOURNEY</div>
+      <div class="journey-main"><div class="big-route">24</div><div><h3 id="resultTitle">Downtown Express</h3><p id="resultPath">El Shorouk Academy → City Centre</p></div><div class="eta"><small>ARRIVES</small><b id="resultEta">3 min</b></div></div>
+      <div class="journey-meta"><span>🚶 5 min walk</span><span>🚌 3 min wait</span><span>◷ 18 min total</span><span>♿ Accessible stop</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="stats section">
+  <div><b>1</b><span>destination search</span></div><div><b>3</b><span>example routes nearby</span></div><div><b>5 min</b><span>sample walk to stop</span></div><div><b>1 place</b><span>for journey information</span></div>
+</section>
+
+<section class="nearby section" id="nearby">
+  <div class="section-heading compact"><div><span>02 · NEARBY STOPS</span><h2>Stops around you.</h2></div><button class="outline" id="refreshStops">↻ Refresh nearby</button></div>
+  <div class="near-grid">
+    <div class="near-map">
+      <div id="liveMap" class="live-map" aria-label="Interactive transport map"></div>
+      <div class="map-tools">
+        <button id="mapSearchBtn">Search this place</button>
+        <button id="mapResetBtn">Reset map</button>
+      </div>
+      <div class="map-caption"><b>Interactive location map</b><span id="locationStatus">Search any place, address or landmark to move the map.</span></div>
+    </div><div class="stop-list">
+      <article class="stop-card featured"><div class="stop-icon">24</div><div class="stop-info"><small>0.4 KM · 5 MIN WALK</small><h3>El Shorouk Academy</h3><p>City Centre · Ramses · Downtown</p><div class="tags"><i>♿ Accessible</i><i>☂ Covered</i></div></div><div class="stop-eta"><b>3 min</b><small>next bus</small></div></article>
+      <article class="stop-card"><div class="stop-icon purple">17</div><div class="stop-info"><small>0.7 KM · 9 MIN WALK</small><h3>Central Market Stop</h3><p>Ramses · School District</p></div><div class="stop-eta"><b>8 min</b><small>next bus</small></div></article>
+      <article class="stop-card"><div class="stop-icon orange">41</div><div class="stop-info"><small>1.1 KM · 14 MIN WALK</small><h3>Opera Street Stop</h3><p>Opera · Hospital · North Area</p></div><div class="stop-eta"><b>14 min</b><small>next bus</small></div></article>
+    </div>
+  </div>
+</section>
+
+<section class="arrivals section" id="arrivals">
+  <div class="section-heading compact"><div><span>03 · ARRIVAL BOARD</span><h2>Know before you wait.</h2></div><div class="live-pill"><i></i> Updating example data</div></div>
+  <div class="arrival-head"><span>ROUTE</span><span>DESTINATION</span><span>ARRIVAL</span><span>STATUS</span></div>
+  <div class="arrival-row"><b class="route-num">24</b><div><strong>Downtown Express</strong><small>El Shorouk Academy → City Centre</small></div><strong class="time">3 min</strong><span class="on">ON TIME</span></div>
+  <div class="arrival-row"><b class="route-num purple">17</b><div><strong>Central Line</strong><small>El Shorouk Academy → Ramses</small></div><strong class="time">8 min</strong><span class="on">ON TIME</span></div>
+  <div class="arrival-row"><b class="route-num orange">41</b><div><strong>North Connector</strong><small>Opera → City Centre</small></div><strong class="time">14 min</strong><span class="late">2 MIN LATE</span></div>
+  <div class="arrival-row"><b class="route-num blue">08</b><div><strong>School Link</strong><small>Market → School District</small></div><strong class="time">21 min</strong><span class="on">ON TIME</span></div>
+  <p class="demo-note">Prototype note: arrival times shown here are illustrative. A production version would connect to an official live transport data source rather than inventing real-time information.</p>
+</section>
+
+<section class="assistant section" id="assistant">
+  <div class="assistant-copy">
+    <div class="eyebrow"><i></i> 04 · BUSLY ASSISTANT</div>
+    <h2>Don't know the stop?<br><em>Just ask.</em></h2>
+    <p>The assistant is designed around the questions people naturally ask while travelling: <b>Where is the nearest stop?</b> <b>Which bus do I need?</b> <b>When should I leave?</b></p>
+    <div class="assistant-features"><div><b>01</b><strong>Nearest stop</strong><span>Uses the place you type or select as your starting point.</span></div><div><b>02</b><strong>Route guidance</strong><span>Suggests a bus from the prototype network.</span></div><div><b>03</b><strong>Clear next step</strong><span>Explains what to do instead of dumping information.</span></div></div>
+  </div>
+  <div class="chat-card">
+    <div class="chat-header"><div class="bot-logo">✦</div><div><b>Busly Assistant</b><span><i></i> Online · Demo assistant</span></div><button id="clearChat">•••</button></div>
+    <div class="chat-messages" id="messages">
+      <div class="chat-msg bot">Hi! I'm Busly 👋<br><br>Tell me a destination and I'll suggest a nearby stop and bus. You can also ask <b>“What is my nearest stop?”</b></div>
+    </div>
+    <div class="quick-chat"><button>Nearest stop</button><button>Next bus</button><button>Get me to school</button><button>City Centre</button></div>
+    <div class="chat-input"><input id="chatInput" placeholder="Ask Busly anything about your trip..."><button id="sendBtn">↑</button></div>
+  </div>
+</section>
+
+<section class="stop-detail section">
+  <div class="section-heading compact"><div><span>05 · STOP EXPERIENCE</span><h2>Everything you need<br>while waiting.</h2></div><p>A good bus experience is not only about the bus. The stop itself should make the next action obvious.</p></div>
+  <div class="detail-grid">
+    <article><div class="detail-number">01</div><h3>Where am I?</h3><p>A clear stop name and simple location information reduces uncertainty when several streets or entrances look similar.</p><span>CLARITY</span></article>
+    <article><div class="detail-number">02</div><h3>When is it coming?</h3><p>A simple countdown gives the user a reason to wait, walk, or consider another route.</p><span>TIMING</span></article>
+    <article><div class="detail-number">03</div><h3>Which direction?</h3><p>Destination names and route direction help prevent boarding the correct bus going the wrong way.</p><span>DIRECTION</span></article>
+    <article><div class="detail-number">04</div><h3>Can I use it?</h3><p>Accessibility, seating, shelter and safe crossing information can help more people plan confidently.</p><span>ACCESS</span></article>
+  </div>
+</section>
+
+<section class="journey section">
+ <div class="journey-copy"><span>06 · JOURNEY TIMELINE</span><h2>From your door<br>to your destination.</h2><p>BUSLY breaks a confusing journey into small, understandable actions.</p></div>
+ <div class="timeline">
+  <div class="timeline-item done"><b>01</b><div><small>NOW</small><h3>Start from El Shorouk Academy</h3><p>You choose the starting point yourself — no GPS permission is required.</p></div></div>
+  <div class="timeline-item active"><b>02</b><div><small>5 MIN WALK</small><h3>Walk to El Shorouk Academy</h3><p>Follow the simple walking instruction instead of searching multiple places.</p></div></div>
+  <div class="timeline-item"><b>03</b><div><small>3 MIN WAIT</small><h3>Board Bus 24</h3><p>Check the route number and destination before boarding.</p></div></div>
+  <div class="timeline-item"><b>04</b><div><small>18 MIN TOTAL</small><h3>Arrive at City Centre</h3><p>Know the destination and next action before you leave the bus.</p></div></div>
+ </div>
+</section>
+
+<section class="safety section">
+ <div><span>07 · SAFETY & ACCESS</span><h2>Transport information<br>should build <em>confidence.</em></h2></div>
+ <div class="safety-cards">
+  <article><b>⌖</b><h3>Location privacy</h3><p>BUSLY does not require your device location in this prototype. You choose a starting point manually, keeping the journey planner simple and predictable.</p></article>
+  <article><b>!</b><h3>Safe waiting</h3><p>Surface useful context such as crossing points, shelter and well-lit areas where reliable information exists.</p></article>
+  <article><b>♿</b><h3>Accessibility</h3><p>Do not rely on colour alone. Pair route colours with numbers, labels and readable status text.</p></article>
+ </div>
+</section>
+
+<section class="why section">
+ <div class="eyebrow"><i></i> 08 · WHY BUSLY?</div>
+ <h2>A small transport problem<br>can create a <em>big daily cost.</em></h2>
+ <div class="why-grid"><div><b>TIME</b><h3>Missed buses become missed minutes.</h3><p>When people cannot estimate arrival, they may wait too long, leave too late, or miss a connection.</p></div><div><b>EFFORT</b><h3>Information is often scattered.</h3><p>Stop signs, maps, messages and route information may not answer the same question in one place.</p></div><div><b>CONFIDENCE</b><h3>Uncertainty changes behaviour.</h3><p>A person who is unsure about the correct stop or direction may avoid public transport altogether.</p></div></div>
+</section>
+
+<section class="how section" id="how">
+ <div class="section-heading"><div><span>09 · HOW THE CONCEPT WORKS</span><h2>One simple flow.<br>Four clear steps.</h2></div></div>
+ <div class="how-grid"><div><span>01</span><h3>Choose a starting point</h3><p>Type an address, landmark or place. You never need to share your device location.</p></div><div><span>02</span><h3>Choose destination</h3><p>Search, choose a shortcut, or ask the assistant naturally.</p></div><div><span>03</span><h3>Compare arrival options</h3><p>See route number, destination, walking time and example arrival.</p></div><div><span>04</span><h3>Act with confidence</h3><p>Follow one clear next step: walk, wait, board or reconsider.</p></div></div>
+</section>
+
+<section class="prototype section">
+ <div class="prototype-main"><span>10 · ENTREPRENEURSHIP PROJECT</span><h2>Built from a real<br><em>opportunity.</em></h2><p>BUSLY applies the camp's opportunity-discovery process to a familiar place: a bus stop or transport point.</p></div>
+ <div class="opportunity-card"><div><b>CHALLENGE AREA</b><strong>Community / Transport</strong></div><div><b>OBSERVABLE PROBLEM</b><strong>People may struggle with timing, information, waiting and directions at transport points.</strong></div><div><b>PRIMARY USER</b><strong>A student or commuter trying to reach a destination on time.</strong></div><div><b>CORE VALUE</b><strong>Make the next transport decision clearer, faster and more confident.</strong></div></div>
+</section>
+
+<section class="footer-cta"><span>READY TO MOVE?</span><h2>Plan the next<br><em>five minutes.</em></h2><a href="#planner">Find my bus →</a></section>
+</main>
+<footer><div class="footer-brand">BUS<span>LY</span></div><p>Smart bus-stop discovery concept · Level 3 Entrepreneurship Camp</p><small>Prototype interface · Example routes and arrivals · Search any place on the map · Not a live transit service</small></footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="script.js"></script>
+</body>
+</html>
