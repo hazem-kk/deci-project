@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BUSLY — Smart Bus Finder</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <a class="logo" href="#">BUS<span>LY</span></a>
+  <nav><a href="#find">Find a bus</a><a href="#stops">Nearby stops</a><a href="#how">How it works</a></nav>
+  <button class="loc" id="locBtn">◎ Use my location</button>
+</header>
+
+<main>
+<section class="hero" id="find">
+  <div class="hero-copy">
+    <div class="pill">● LIVE BUS DISCOVERY</div>
+    <h1>Never miss<br><span>your bus.</span></h1>
+    <p>Find the closest bus stop, see arrival times, and ask the assistant which bus gets you there.</p>
+    <div class="search">
+      <div class="search-icon">⌕</div><input id="destination" placeholder="Where are you going? e.g. Downtown">
+      <button id="findBtn">Find my bus →</button>
+    </div>
+    <div class="quick"><button data-dest="School">School</button><button data-dest="City Centre">City Centre</button><button data-dest="Home">Home</button><button data-dest="Hospital">Hospital</button></div>
+  </div>
+  <div class="hero-map">
+    <div class="map-grid"></div>
+    <div class="route r1"></div><div class="route r2"></div>
+    <div class="stop s1">●</div><div class="stop s2">●</div><div class="stop s3 active">●</div>
+    <div class="you">YOU</div>
+    <div class="map-card"><small>NEAREST STOP</small><b id="nearest">Al Azbakeyia Station</b><span>📍 0.4 km away · 5 min walk</span></div>
+  </div>
+</section>
+
+<section class="results" id="stops">
+  <div class="section-title"><div><span>YOUR LIVE BOARD</span><h2>Next departures</h2></div><button id="refresh">↻ Refresh</button></div>
+  <div class="bus-board" id="busBoard">
+    <article class="bus"><div class="route-num">24</div><div><b>Downtown Express</b><small>Al Azbakeyia → City Centre</small></div><strong>3 min</strong><em>ON TIME</em></article>
+    <article class="bus"><div class="route-num purple">17</div><div><b>Central Line</b><small>Al Azbakeyia → Ramses</small></div><strong>8 min</strong><em>ON TIME</em></article>
+    <article class="bus"><div class="route-num orange">41</div><div><b>North Connector</b><small>Opera → City Centre</small></div><strong>14 min</strong><em>2 MIN LATE</em></article>
+  </div>
+</section>
+
+<section class="assistant-section">
+ <div class="assistant-copy"><span>SMART TRAVEL ASSISTANT</span><h2>Ask the bus<br><i>assistant.</i></h2><p>Tell it where you want to go. It uses your location to suggest the nearest stop and a suitable route.</p>
+ <div class="feature"><b>01</b><span><strong>Nearest stop</strong><small>Uses your device location when permission is available.</small></span></div>
+ <div class="feature"><b>02</b><span><strong>Best route</strong><small>Matches your destination with the example bus network.</small></span></div>
+ </div>
+ <div class="chat" id="chat">
+   <div class="chat-head"><div class="bot">✦</div><div><b>Busly Assistant</b><small>● Ready to help</small></div></div>
+   <div class="messages" id="messages"><div class="msg botmsg">Hey! 👋 Tell me where you're going and I'll help you find a nearby stop.</div></div>
+   <div class="chat-suggestions"><button>Nearest stop</button><button>Next bus</button><button>City Centre</button></div>
+   <div class="chat-input"><input id="chatInput" placeholder="Ask: “How do I get to City Centre?”"><button id="send">↑</button></div>
+ </div>
+</section>
+
+<section class="steps" id="how"><span>HOW IT WORKS</span><h2>From location to<br><b>boarding.</b></h2><div class="stepgrid">
+<div><b>01</b><h3>Share location</h3><p>Allow location access so the site can identify your nearest stop.</p></div>
+<div><b>02</b><h3>Choose destination</h3><p>Search a place or ask the assistant what bus to take.</p></div>
+<div><b>03</b><h3>Check arrival</h3><p>Use the departure board to see the next example arrival.</p></div>
+</div></section>
+</main>
+<footer>BUSLY · A CONCEPT PROTOTYPE FOR THE LEVEL 3 ENTREPRENEURSHIP CAMP</footer>
+<script src="script.js"></script>
+</body></html>
