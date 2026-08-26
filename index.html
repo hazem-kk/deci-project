@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080b14">
+<title>Busly — Your bus. Your stop. Your time.</title>
+<meta name="description" content="Busly is a smart bus-stop assistant prototype: find your nearest stop, plan a journey, see live-style arrivals, and ask Buddy for help.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to content</a>
+
+<!-- decorative route rail -->
+<div class="route-rail" aria-hidden="true">
+  <svg width="34" height="100vh" viewBox="0 0 34 800" preserveAspectRatio="none" style="height:100vh;">
+    <defs>
+      <linearGradient id="railGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#ffffff"/>
+        <stop offset="50%" stop-color="#c084fc"/>
+        <stop offset="100%" stop-color="#7c3aed"/>
+      </linearGradient>
+    </defs>
+    <path class="rail-track" id="railTrack" d="M17 0 L17 800"/>
+    <path class="rail-fill" id="railFill" d="M17 0 L17 800" stroke-dasharray="800" stroke-dashoffset="800"/>
+    <circle class="rail-bus" id="railBus" r="6" fill="#a855f7" cx="17" cy="0"/>
+  </svg>
+</div>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="siteNav">
+  <div class="wrap nav__inner">
+    <a href="#top" class="nav__brand" id="logoHome">
+      <svg class="logo-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="logoGrad" x1="0" y1="0" x2="40" y2="40"><stop stop-color="#7c3aed"/><stop offset="1" stop-color="#f5f3ff"/></linearGradient></defs>
+        <rect width="40" height="40" rx="12" fill="url(#logoGrad)"/>
+        <path d="M11 24.5V15a3 3 0 013-3h12a3 3 0 013 3v9.5" stroke="#04101f" stroke-width="2" stroke-linecap="round"/>
+        <rect x="12" y="16" width="16" height="6.5" rx="1.5" fill="#04101f"/>
+        <circle cx="15" cy="27" r="2.1" fill="#04101f"/>
+        <circle cx="25" cy="27" r="2.1" fill="#04101f"/>
+        <path d="M20 8v3" stroke="#04101f" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      Busly
+    </a>
+    <ul class="nav__links">
+      <li><a href="#top">Home</a></li>
+      <li><a href="#planner">Find a Bus</a></li>
+      <li><a href="#nearest">Stops</a></li>
+      <li><a href="#arrivals">Arrivals</a></li>
+      <li><a href="#chat" id="navChatLink">Chat</a></li>
+      <li><a href="#why">About</a></li>
+    </ul>
+    <div class="nav__cta">
+      <button class="btn btn--secondary btn--sm" id="navLocationBtn">Use My Location</button>
+      <button class="btn btn--primary btn--sm" id="navFindBtn">Find My Bus</button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="top">
+  <div class="wrap hero__grid">
+    <div class="hero__content" data-animate>
+      <span class="eyebrow">Live Journey Planner</span>
+      <h1>Never miss <em>your bus</em> again.</h1>
+      <p class="hero__sub">Find the nearest stop, see live-style arrival times, and get the best route in seconds — no confusing timetables, no guesswork.</p>
+      <div class="hero__cta-row">
+        <button class="btn btn--primary" id="heroFindBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          Find My Bus
+        </button>
+        <button class="btn btn--secondary" id="heroExploreBtn">Explore Stops</button>
+      </div>
+      <div class="hero__trust">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>No account required</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Simple directions</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg>Accessibility-aware</span>
+      </div>
+    </div>
+
+    <div class="hero__visual" data-animate style="transition-delay:.1s;">
+      <div class="hero-map-card">
+        <svg class="route-line-svg" viewBox="0 0 320 380" aria-hidden="true">
+          <defs><linearGradient id="heroLineGrad" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f5f3ff"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
+          <path class="route-line-path" d="M40 300 C 80 260, 60 200, 110 175 S 200 140, 190 90 S 250 55, 270 40"/>
+        </svg>
+        <div class="hero-map-card__grid">
+          <svg width="100%" height="100%" viewBox="0 0 320 380" aria-hidden="true">
+            <g stroke="rgba(255,255,255,.06)" stroke-width="1">
+              <path d="M0 60H320"/><path d="M0 130H320"/><path d="M0 200H320"/><path d="M0 270H320"/><path d="M0 330H320"/>
+              <path d="M60 0V380"/><path d="M140 0V380"/><path d="M220 0V380"/><path d="M280 0V380"/>
+            </g>
+          </svg>
+        </div>
+        <div class="hero-map-card__head">
+          <span class="pill">Demo data</span>
+          <span style="font-family:var(--font-mono);font-size:12px;color:var(--text-faint);">18:24</span>
+        </div>
+        <div class="route-dot-pulse" style="left:36px;top:296px;" aria-hidden="true"></div>
+        <div class="route-dot-pulse" style="left:264px;top:36px;background:var(--purple);animation-delay:.6s;" aria-hidden="true"></div>
+
+        <div class="hero-map-card__float float-card--stop glass">
+          <div class="label">Nearest stop</div>
+          <div class="value">Tahrir Square<small>120m</small></div>
+        </div>
+        <div class="hero-map-card__float float-card--bus glass">
+          <div class="label">Next bus</div>
+          <div class="value" style="display:flex;align-items:center;gap:8px;">
+            <span class="route-badge rb-blue" style="width:28px;height:28px;font-size:12px;border-radius:8px;">24</span>
+            Downtown Cairo
+          </div>
+        </div>
+        <div class="hero-map-card__float float-card--eta glass">
+          <div class="label">Arriving in</div>
+          <div class="value" style="color:var(--cyan);font-size:22px;">4 min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JOURNEY FINDER ============ -->
+<section class="section" id="planner">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">Quick Journey Finder</span>
+      <h2>Where are you <span class="grad-text">going?</span></h2>
+      <p>Tell Busly your destination and we'll match you with the nearest stop, the right bus, and a live-style arrival estimate.</p>
+    </div>
+
+    <div class="glass finder-card" data-animate>
+      <div class="finder-fields">
+        <div class="field">
+          <label for="fromInput">Current location</label>
+          <div class="field-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7.4 7-12.5A7 7 0 105 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.4"/></svg>
+            <input type="text" id="fromInput" value="Set my location…" readonly aria-describedby="fromHint">
+          </div>
+          <div id="fromHint" class="sr-only">Use the location banner below to detect your position, or type a starting point manually.</div>
+        </div>
+        <button class="swap-btn" id="swapBtn" aria-label="Swap starting point and destination" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 3l4 4-4 4M21 7H7M7 21l-4-4 4-4M3 17h14"/></svg>
+        </button>
+        <div class="field">
+          <label for="toInput">Destination</label>
+          <div class="field-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" id="toInput" placeholder="e.g. Downtown Cairo, School, Cairo Public Library…" autocomplete="off">
+          </div>
+        </div>
+        <button class="btn btn--primary" id="searchBtn" type="button" style="height:52px;">Search</button>
+      </div>
+
+      <span class="chip-label">Popular destinations</span>
+      <div class="chip-row" id="chipRow" role="group" aria-label="Popular destinations">
+        <button class="chip" data-dest="School">School</button>
+        <button class="chip" data-dest="Downtown Cairo">Downtown Cairo</button>
+        <button class="chip" data-dest="Cairo Public Library">Cairo Public Library</button>
+        <button class="chip" data-dest="City Stars Mall">City Stars Mall</button>
+        <button class="chip" data-dest="Hospital">Hospital</button>
+        <button class="chip" data-dest="Cairo Stadium">Cairo Stadium</button>
+      </div>
+
+      <div id="locationBanner" class="location-banner" style="display:none;" role="status"></div>
+
+      <div class="finder-actions">
+        <button class="btn btn--ghost btn--sm" id="useLocationBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="margin-right:6px;"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="5"/></svg>
+          Use My Location
+        </button>
+      </div>
+
+      <div class="result-area" id="resultArea" aria-live="polite"></div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardWrap" data-animate>
+      <div class="section-head" style="margin-top:64px;margin-bottom:28px;">
+        <span class="eyebrow" style="color:var(--purple);border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.08);">Your Journey at a Glance</span>
+      </div>
+      <div class="dash-grid" id="dashGrid">
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7.4 7-12.5A7 7 0 105 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.4"/></svg><div class="label">Nearest stop</div><div class="value" id="dashStop">Tahrir Square</div></div>
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="3"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg><div class="label">Next bus</div><div class="value" id="dashBus">24 → Downtown Cairo</div></div>
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><div class="label">Destination</div><div class="value" id="dashDest">Not set</div></div>
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 4a2 2 0 11-2-2M4 21l4.5-9L13 15l3-6M17 4l4 2-4 2"/></svg><div class="label">Walking time</div><div class="value" id="dashWalk">2 min</div></div>
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div class="label">Arrival</div><div class="value" id="dashArrival">4 min</div></div>
+        <div class="glass dash-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg><div class="label">Trip duration</div><div class="value" id="dashDuration">18 min</div></div>
+      </div>
+
+      <div class="saved-stops">
+        <div class="saved-stops-head">
+          <h4>Saved stops</h4>
+        </div>
+        <div class="saved-chip-row" id="savedChipRow">
+          <span style="font-size:13px;color:var(--text-faint);" id="savedEmptyMsg">No saved stops yet — tap "Save Stop" on any stop to pin it here.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ NEAREST STOP + STOP LIST ============ -->
+<section class="section" id="nearest">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">Nearest Stop</span>
+      <h2>Everything you need, <span class="grad-text">right where you stand.</span></h2>
+      <p>Your closest stop, its next bus, and every nearby alternative — ranked by distance.</p>
+    </div>
+
+    <div class="nearest-grid">
+      <div class="glass-strong nearest-card" data-animate>
+        <div class="nearest-card__top">
+          <span class="nearest-card__badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 22s7-7.4 7-12.5A7 7 0 105 9.5C5 14.6 12 22 12 22z"/></svg>Nearest stop</span>
+          <button class="icon-btn" id="saveStopBtn" aria-label="Save this stop">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="saveStopIcon"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          </button>
+        </div>
+        <h3 id="nearestName">Tahrir Square Stop</h3>
+        <div class="nearest-card__dist">
+          <div><span class="big" id="nearestDist">120 m</span><span class="small">away</span></div>
+          <div><span class="big" id="nearestWalk">2 min</span><span class="small">walk</span></div>
+        </div>
+        <div class="nearest-divider"></div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);font-weight:700;margin-bottom:12px;">Next bus</div>
+        <div class="next-bus-row">
+          <span class="route-badge rb-blue" id="nearestBusBadge" style="width:44px;height:44px;font-size:15px;">24</span>
+          <div class="rt"><div class="num" id="nearestBusNum">Route 24 · Downtown Express</div><div class="to" id="nearestBusTo">→ Downtown Cairo</div></div>
+          <div class="time" id="nearestBusTime">4<span style="font-size:12px;">min</span></div>
+        </div>
+        <div class="nearest-actions">
+          <button class="btn btn--secondary btn--sm" id="directionsBtn">Directions</button>
+          <button class="btn btn--secondary btn--sm" id="viewStopBtn">View Stop</button>
+          <button class="btn btn--primary btn--sm" id="saveStopBtn2">Save Stop</button>
+        </div>
+      </div>
+
+      <div class="glass nearest-card" style="padding:28px;" data-animate style="transition-delay:.08s;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+          <h4 style="font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);">Stops near you</h4>
+          <span style="font-size:12px;color:var(--text-faint);font-family:var(--font-mono);" id="stopCount">5 stops</span>
+        </div>
+        <div class="stop-list" id="stopList"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MAP ============ -->
+<section class="section" id="map" style="padding-top:0;">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">Interactive Map</span>
+      <h2>See your <span class="grad-text">whole journey</span> at once.</h2>
+      <p>A simulated map for this prototype — showing your location, nearby stops, and the route to your destination.</p>
+    </div>
+    <div class="glass map-shell google-map-shell" data-animate>
+      <div class="map-toolbar">
+        <div class="field-input map-search-field">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="mapSearchInput" placeholder="Search Cairo, a landmark, address…" autocomplete="off">
+        </div>
+        <button class="btn btn--primary btn--sm" id="mapSearchBtn">Search place</button>
+        <button class="btn btn--secondary btn--sm" id="mapResetBtn">Reset map</button>
+      </div>
+      <div class="map-canvas-wrap google-map-wrap">
+        <div id="googleMap" role="application" aria-label="Interactive Google Map"></div>
+        <div class="map-status-pill" id="mapStatusPill"><span class="map-status-dot"></span><span>Google Maps</span></div>
+        <div class="map-place-card glass" id="mapPlaceCard" hidden>
+          <div class="map-place-card__eyebrow">Selected place</div>
+          <strong id="mapPlaceName">—</strong>
+          <span id="mapPlaceAddress">—</span>
+        </div>
+        <div class="map-legend">
+          <span><i class="legend-you"></i>You</span>
+          <span><i class="legend-stop"></i>Bus stop</span>
+          <span><i class="legend-route"></i>Bus route</span>
+          <span><i class="legend-destination"></i>Destination</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ROUTES ============ -->
+<section class="section" id="routes">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">Bus Routes</span>
+      <h2>Five routes. <span class="grad-text">One clear network.</span></h2>
+      <p>Tap any route to see its full stop list and sample schedule.</p>
+    </div>
+    <div class="routes-grid" id="routesGrid" data-animate></div>
+  </div>
+</section>
+
+<!-- ============ ARRIVALS ============ -->
+<section class="section" id="arrivals">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">Live-Style Arrivals</span>
+      <h2>Know before you <span class="grad-text">wait.</span></h2>
+      <p>A premium arrival board with animated countdowns — so you always know what's coming next.</p>
+    </div>
+    <div class="glass arrival-board" data-animate>
+      <div class="arrival-board__head">
+        <span>Route</span><span>Destination</span><span>Arrival</span><span>Status</span>
+      </div>
+      <div id="arrivalList"></div>
+      <div class="prototype-tag">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 18a2 2 0 001.7 3h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        Demo / Prototype data — arrival times are illustrative examples, not a live transit feed.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CHAT ============ -->
+<section class="section" id="chat">
+  <div class="wrap chat-showcase">
+    <div data-animate>
+      <span class="eyebrow" style="color:var(--purple);border-color:rgba(168,85,247,.3);background:rgba(168,85,247,.08);">Chat with Buddy</span>
+      <h2 style="margin-top:16px;">Don't know the stop? <span class="grad-text">Just ask.</span></h2>
+      <p style="font-size:17px;margin-top:14px;">Buddy understands natural questions about stops, routes, arrivals, delays, transfers and directions — not just a handful of canned replies.</p>
+      <div class="chat-points">
+        <div class="chat-point"><span class="num">01</span><div><h4>Understands real questions</h4><p>Ask naturally — "what bus goes to the library?" or "is my bus delayed?" both work.</p></div></div>
+        <div class="chat-point"><span class="num">02</span><div><h4>Uses what it knows</h4><p>If you've shared your location, Buddy uses your nearest stop automatically.</p></div></div>
+        <div class="chat-point"><span class="num">03</span><div><h4>Always honest</h4><p>Buddy is upfront that arrival times are sample data, never real-time.</p></div></div>
+      </div>
+      <div class="chat-prompt-row">
+        <button class="btn btn--secondary btn--sm chip-prompt" data-prompt="Nearest bus stop">Nearest bus stop</button>
+        <button class="btn btn--secondary btn--sm chip-prompt" data-prompt="Next bus">Next bus</button>
+        <button class="btn btn--secondary btn--sm chip-prompt" data-prompt="Bus to school">Bus to school</button>
+        <button class="btn btn--secondary btn--sm chip-prompt" data-prompt="Plan my journey">Plan my journey</button>
+      </div>
+    </div>
+
+    <div class="glass-strong chat-preview" data-animate style="transition-delay:.1s;">
+      <div class="chat-header">
+        <div class="chat-avatar">🚍<span class="dot"></span></div>
+        <div><h4>Buddy</h4><div class="sub">● Your bus assistant</div></div>
+      </div>
+      <div class="chat-body" id="chatBodyInline"></div>
+      <div class="chat-suggest" id="chatSuggestInline">
+        <button class="chip chip-prompt" data-prompt="Nearest bus stop">Nearest bus stop</button>
+        <button class="chip chip-prompt" data-prompt="Next bus">Next bus</button>
+        <button class="chip chip-prompt" data-prompt="Bus to school">Bus to school</button>
+        <button class="chip chip-prompt" data-prompt="Plan my journey">Plan my journey</button>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chatInputInline" placeholder="Ask Buddy anything…" aria-label="Message Buddy">
+        <button class="chat-send" id="chatSendInline" aria-label="Send message">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow">How It Works</span>
+      <h2>Three steps. <span class="grad-text">Zero confusion.</span></h2>
+    </div>
+    <div class="how-grid">
+      <div class="glass how-card" data-animate>
+        <div class="how-connector"></div>
+        <span class="step-num">01</span>
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="5"/></svg></div>
+        <h3>Share your location</h3>
+        <p>Busly finds nearby stops — or you can type a starting point manually, no permission required.</p>
+      </div>
+      <div class="glass how-card" data-animate style="transition-delay:.1s;">
+        <div class="how-connector"></div>
+        <span class="step-num">02</span>
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
+        <h3>Choose your destination</h3>
+        <p>We compare available routes and show walking distance, arrival time and journey length.</p>
+      </div>
+      <div class="glass how-card" data-animate style="transition-delay:.2s;">
+        <span class="step-num">03</span>
+        <div class="step-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="3"/><circle cx="8" cy="18" r="1.6"/><circle cx="16" cy="18" r="1.6"/></svg></div>
+        <h3>Catch your bus</h3>
+        <p>See the next arrival, which stop to board at, and exactly what to do next.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHY BUSBUDDY + ENTREPRENEURSHIP ============ -->
+<section class="section" id="why">
+  <div class="wrap why-layout">
+    <div data-animate>
+      <span class="eyebrow">Why Busly?</span>
+      <h2 style="margin-top:16px;">A small transport problem <span class="grad-text">can cost a lot of time.</span></h2>
+      <p style="font-size:16px;margin-top:12px;">Students and everyday passengers often waste minutes just figuring out where to stand and which bus to trust. Busly turns that uncertainty into one clear answer.</p>
+      <div class="why-grid" style="margin-top:28px;">
+        <div class="glass why-card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div><h4>Missed buses become missed minutes</h4><p>Without a clear estimate, people wait too long, leave too late, or miss a connection entirely.</p></div>
+        </div>
+        <div class="glass why-card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h7"/></svg></div>
+          <div><h4>Information is scattered</h4><p>Stop signs, paper timetables and route maps rarely answer the same question in one place.</p></div>
+        </div>
+        <div class="glass why-card">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg></div>
+          <div><h4>Confidence changes behaviour</h4><p>A rider unsure of the correct stop or direction may avoid public transport altogether — clarity brings them back.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-strong value-card" data-animate style="transition-delay:.1s;">
+      <span class="eyebrow">Entrepreneurship Project</span>
+      <h3 style="margin-top:18px;font-size:21px;">Built from a real opportunity</h3>
+      <div style="margin-top:22px;">
+        <div class="value-row"><div class="k">Problem</div><div class="v">Students and bus users can struggle to know their nearest stop, which bus to take, when it arrives, and what to do next.</div></div>
+        <div class="value-row"><div class="k">User</div><div class="v">A <b>student or everyday passenger</b> who wants a quick, clear answer without digging through complicated transport information.</div></div>
+        <div class="value-row"><div class="k">Solution</div><div class="v">A simple bus-stop assistant combining nearby stops, route matching, live-style arrivals and a conversational helper.</div></div>
+        <div class="value-row"><div class="k">Value</div><div class="v"><b>Less confusion. Less waiting uncertainty.</b> Easier journey planning, from door to destination.</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SAFETY & PRIVACY ============ -->
+<section class="section" id="safety">
+  <div class="wrap">
+    <div class="section-head" data-animate>
+      <span class="eyebrow" style="color:var(--mint);border-color:rgba(52,211,153,.3);background:rgba(52,211,153,.08);">Safety &amp; Privacy</span>
+      <h2>Built to earn your <span class="grad-text">trust.</span></h2>
+      <p>Your location is only ever used to improve journey planning inside this prototype — nothing more.</p>
+    </div>
+    <div class="safety-grid">
+      <div class="glass safety-card" data-animate>
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7.4 7-12.5A7 7 0 105 9.5C5 14.6 12 22 12 22z"/><circle cx="12" cy="9.5" r="2.4"/></svg></div>
+        <h3>Location, on your terms</h3>
+        <p>Location access always requires explicit browser permission and is never assumed.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>You can always type a starting point instead</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Denying access never breaks the app</li>
+        </ul>
+      </div>
+      <div class="glass safety-card" data-animate style="transition-delay:.1s;">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 018 0v3"/></svg></div>
+        <h3>Minimal by design</h3>
+        <p>No accounts, no passwords, no unnecessary personal information collected.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Saved stops stay in your browser only</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Never asked for credentials or payment info</li>
+        </ul>
+      </div>
+      <div class="glass safety-card" data-animate style="transition-delay:.2s;">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div>
+        <h3>Honest simulation</h3>
+        <p>This prototype uses realistic sample transport data unless a live transit API is connected.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Demo data is always clearly labelled</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>Buddy never claims sample data is live</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROTOTYPE NOTICE ============ -->
+<section class="section" style="padding-top:0;padding-bottom:90px;">
+  <div class="wrap">
+    <div class="proto-banner" data-animate>
+      <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9L2.5 18a2 2 0 001.7 3h15.6a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg></div>
+      <div>
+        <h3>This is a prototype, built to be tested</h3>
+        <p>Stops, routes, arrival times and delays shown here are realistic sample data created for this entrepreneurship project. A production version would connect to an official live transit data source instead of simulating arrivals — this build focuses on proving the experience: finding a stop, planning a route, and getting a clear next step, fast.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer__top">
+      <div>
+        <div class="footer__brand">
+          <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="40" height="40" rx="12" fill="url(#logoGrad)"/><path d="M11 24.5V15a3 3 0 013-3h12a3 3 0 013 3v9.5" stroke="#04101f" stroke-width="2" stroke-linecap="round"/><rect x="12" y="16" width="16" height="6.5" rx="1.5" fill="#04101f"/><circle cx="15" cy="27" r="2.1" fill="#04101f"/><circle cx="25" cy="27" r="2.1" fill="#04101f"/></svg>
+          Busly
+        </div>
+        <p class="tag">Your bus. Your stop. Your time. A smart bus-stop assistant prototype built for a Level 3 entrepreneurship project.</p>
+      </div>
+      <div>
+        <h5>Product</h5>
+        <ul>
+          <li><a href="#planner">Find a bus</a></li>
+          <li><a href="#nearest">Nearest stop</a></li>
+          <li><a href="#arrivals">Arrivals</a></li>
+          <li><a href="#map">Map</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Project</h5>
+        <ul>
+          <li><a href="#why">Why Busly</a></li>
+          <li><a href="#safety">Safety &amp; privacy</a></li>
+          <li><a href="#how">How it works</a></li>
+        </ul>
+      </div>
+      <div>
+        <h5>Assistant</h5>
+        <ul>
+          <li><a href="#chat" id="footerChatLink">Chat with Buddy</a></li>
+          <li><a href="#routes">Bus routes</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>Smart bus-stop discovery concept · Level 3 Entrepreneurship Project</span>
+      <span>Prototype interface · Sample routes &amp; arrivals · Not a live transit service</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ MOBILE BOTTOM NAV ============ -->
+<nav class="bottom-nav" aria-label="Primary">
+  <button data-scroll="#top" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>Home</button>
+  <button data-scroll="#planner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Plan</button>
+  <button data-scroll="#nearest"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-7.4 7-12.5A7 7 0 105 9.5C5 14.6 12 22 12 22z"/></svg>Stops</button>
+  <button data-scroll="#arrivals"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Arrivals</button>
+  <button id="bottomNavChat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Chat</button>
+</nav>
+
+<!-- ============ FLOATING CHATBOT ============ -->
+<button class="chat-fab" id="chatFab" aria-haspopup="dialog" aria-expanded="false" aria-controls="chatWidget" aria-label="Open Buddy, your bus assistant">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  <span class="badge"></span>
+</button>
+
+<div class="chat-widget" id="chatWidget" role="dialog" aria-label="Chat with Buddy" aria-hidden="true">
+  <div class="chat-header">
+    <div class="chat-avatar">🚍<span class="dot"></span></div>
+    <div><h4>Buddy</h4><div class="sub">● Online · Your bus assistant</div></div>
+    <button class="chat-close" id="chatCloseBtn" aria-label="Close chat">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="chat-body" id="chatBodyWidget"></div>
+  <div class="chat-suggest" id="chatSuggestWidget">
+    <button class="chip chip-prompt" data-prompt="Nearest bus stop">Nearest bus stop</button>
+    <button class="chip chip-prompt" data-prompt="Next bus">Next bus</button>
+    <button class="chip chip-prompt" data-prompt="Bus to school">Bus to school</button>
+    <button class="chip chip-prompt" data-prompt="Plan my journey">Plan my journey</button>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" id="chatInputWidget" placeholder="Ask Buddy anything…" aria-label="Message Buddy">
+    <button class="chat-send" id="chatSendWidget" aria-label="Send message">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ============ MODAL (directions / stop detail) ============ -->
+<div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card" style="position:relative;">
+    <button class="icon-btn close-x" id="modalCloseBtn" aria-label="Close">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <h3 id="modalTitle">Walking directions</h3>
+    <p id="modalSub" style="font-size:13px;margin-bottom:6px;"></p>
+    <div id="modalBody" style="margin-top:16px;"></div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+<script>
+  // Replace this with your restricted Google Maps Platform browser key.
+  // Enable Maps JavaScript API + Places API (New) in Google Cloud.
+  window.BUSLY_GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY';
+</script>
+<script src="script.js"></script>
+</body>
+</html>
